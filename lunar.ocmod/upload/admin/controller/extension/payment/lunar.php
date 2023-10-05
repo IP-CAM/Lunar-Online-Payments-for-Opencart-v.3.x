@@ -4,6 +4,8 @@ class ControllerExtensionPaymentLunar extends Controller
 {
     const PLUGIN_VERSION = '1.0.0';
     const EXTENSION_PATH = 'extension/payment/lunar';
+    const CARD_METHOD = 'card';
+    const MOBILEPAY_METHOD = 'mobilePay';
 
     private $error = array();
     private $oc_token = '';
@@ -341,15 +343,11 @@ class ControllerExtensionPaymentLunar extends Controller
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer']      = $this->load->controller('common/footer');
 
-        /**
-         * Check if debug mode was requested.
-         * Show/hide some fields based on this
-         */
-        if (isset($this->request->get['debug'])) {
-            $data['debugMode'] = true;
-        } else {
-            $data['debugMode'] = false;
-        }
+        $data['debugMode'] = isset($this->request->get['debug']) || ($this->config->get('payment_lunar_api_mode') == 'test');
+
+
+        $data ['lunar_card_setting_fields'] = $this->load->view(self::EXTENSION_PATH . '_' . self::CARD_METHOD . '_setting', $data);
+        $data ['lunar_mobilePay_setting_fields'] = $this->load->view(self::EXTENSION_PATH . '_' . self::MOBILEPAY_METHOD . '_setting', $data);
 
         $this->response->setOutput($this->load->view(self::EXTENSION_PATH, $data));
     }
@@ -358,6 +356,16 @@ class ControllerExtensionPaymentLunar extends Controller
     /** Get lunar payments. */
     public function payments()
     {
+
+
+
+
+        return;
+
+
+
+
+
         $this->oc_token = version_compare(VERSION, '3.0.0.0', '>=') ? 'user_token' : $this->oc_token = 'token';
         $this->load->language(self::EXTENSION_PATH . '_payments');
         $this->load->model(self::EXTENSION_PATH);

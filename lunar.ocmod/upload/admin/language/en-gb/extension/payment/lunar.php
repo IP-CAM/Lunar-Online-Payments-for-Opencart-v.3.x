@@ -4,7 +4,7 @@ $_['heading_title'] = 'Lunar';
 $_['text_lunar']  = '<a target="_BLANK" href="https://lunar.app"><img src="view/image/payment/lunar.png" alt="Lunar logo" title="Lunar logo" /></a>';
 
 // Text
-$_['text_description']             = 'Lunar enables you to accept credit and debit cards on your OpenCart platform. If you don\'t already have an account with Lunar, you can create it at https://lunar.app';
+$_['text_description']             = 'Lunar enables you to accept credit and debit cards on your OpenCart platform. If you don\'t already have an account with Lunar, you can create it at <a target="_blank" href="https://lunar.app"><b>https://lunar.app</b></a>';
 $_['text_extension']               = 'Extensions';
 $_['text_edit_settings']           = 'Edit Lunar';
 $_['text_general_settings']        = 'General';
