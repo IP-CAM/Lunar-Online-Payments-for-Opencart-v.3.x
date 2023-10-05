@@ -3,35 +3,34 @@
 class ControllerExtensionPaymentLunar extends Controller
 {
     const PLUGIN_VERSION = '1.0.0';
-    const VENDOR_NAME = 'lunar';
-    const CONFIG_CODE = 'payment_' . self::VENDOR_NAME;
-    const EXTENSION_PATH = 'extension/payment/' . self::VENDOR_NAME;
-    const THIS_EXTENSION_LIBRARY_PATH = DIR_SYSTEM . 'library' . DIRECTORY_SEPARATOR. 'Lunar' .  DIRECTORY_SEPARATOR;
+    const EXTENSION_PATH = 'extension/payment/lunar';
 
     public function index()
     {
         $this->load->language(self::EXTENSION_PATH);
         $this->load->model(self::EXTENSION_PATH);
         $this->load->model('checkout/order');
+        
         $data['plugin_version'] = self::PLUGIN_VERSION;
-        $data['VERSION'] = VERSION;
-        $data['active_mode']=$this->config->get(self::CONFIG_CODE . '_api_mode');
+        $data['opencart_version'] = VERSION;
 
-        if ($this->config->get(self::CONFIG_CODE . '_api_mode') == 'live') {
-            $data[self::VENDOR_NAME . '_public_key'] = $this->config->get(self::CONFIG_CODE . '_public_key_live');
+        $data['active_mode']=$this->config->get('payment_lunar_api_mode');
+
+        if ($this->config->get('payment_lunar_api_mode') == 'live') {
+            $data['lunar_public_key'] = $this->config->get('payment_lunar_public_key_live');
         } else {
-            $data[self::VENDOR_NAME . '_public_key'] = $this->config->get(self::CONFIG_CODE . '_public_key_test');
+            $data['lunar_public_key'] = $this->config->get('payment_lunar_public_key_test');
         }
 
-        if ($this->config->get(self::CONFIG_CODE . '_checkout_title') != '') {
-            $data['popup_title'] = $this->config->get(self::CONFIG_CODE . '_checkout_title');
+        if ($this->config->get('payment_lunar_checkout_title') != '') {
+            $data['popup_title'] = $this->config->get('payment_lunar_checkout_title');
         } else {
             $data['popup_title'] = $this->config->get('config_name');
         }
 
         $data['button_confirm'] = $this->language->get('button_confirm');
         $data['lc']             = $this->session->data['language'];
-        $data['mode']           = $this->config->get(self::CONFIG_CODE . '_checkout_display_mode');
+        $data['mode']           = $this->config->get('payment_lunar_checkout_display_mode');
 
         $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
         $order_info['currency_code'] = strtoupper($order_info['currency_code']);
@@ -66,8 +65,8 @@ class ControllerExtensionPaymentLunar extends Controller
             $p ++;
         }
         $data['products'] = json_encode($products_array);
-        if ($this->config->get(self::CONFIG_CODE . '_checkout_description') != '') {
-            $data['popup_description'] = $this->config->get(self::CONFIG_CODE . '_checkout_description');
+        if ($this->config->get('payment_lunar_checkout_description') != '') {
+            $data['popup_description'] = $this->config->get('payment_lunar_checkout_description');
         } else {
             $data['popup_description'] = implode(", & ", $products_label);
         }
@@ -95,8 +94,8 @@ class ControllerExtensionPaymentLunar extends Controller
     public function validate_payment()
     {
         $this->load->language(self::EXTENSION_PATH);
-        $this->logger = new Log(self::VENDOR_NAME . '.log');
-        $log          = $this->config->get(self::CONFIG_CODE . '_logging') ? true : false;
+        $this->logger = new Log('lunar.log');
+        $log          = $this->config->get('payment_lunar_logging') ? true : false;
 
         $json = array();
         $ref  = $this->request->post['trans_ref'];
@@ -108,9 +107,10 @@ class ControllerExtensionPaymentLunar extends Controller
             $this->logger->write('Transaction validation. Transaction refference: ' . $ref);
         }
 
-        $app_key = $this->config->get(self::CONFIG_CODE . '_api_mode') == 'live' ? $this->config->get(self::CONFIG_CODE . '_app_key_live') : $this->config->get(self::CONFIG_CODE . '_app_key_test');
+        $app_key = $this->config->get('payment_lunar_api_mode') == 'live' ? $this->config->get('payment_lunar_app_key_live') : $this->config->get('payment_lunar_app_key_test');
 
-        require_once(self::THIS_EXTENSION_LIBRARY_PATH . 'Client.php');
+        require_once(DIR_SYSTEM . 'library/Lunar/Client.php');
+
         Lunar\Client::setKey($app_key);
 
         $this->load->model('checkout/order');
@@ -149,7 +149,7 @@ class ControllerExtensionPaymentLunar extends Controller
             if (isset($trans_data['transaction']['successful']) && (strtoUpper($trans_data['transaction']['currency']) == $order_info['currency_code']) && ($trans_data['transaction']['amount'] == $formattedAmount['in_minor'])) {
                 $order_captured = false;
 
-                if ($this->config->get(self::CONFIG_CODE . '_capture_mode') == 'instant') {
+                if ($this->config->get('payment_lunar_capture_mode') == 'instant') {
                     $data         = array(
                         'amount'   => $formattedAmount['in_minor'],
                         'currency' => $order_info['currency_code']
@@ -175,20 +175,20 @@ class ControllerExtensionPaymentLunar extends Controller
                     $type                = 'Authorize';
                     $transaction_amount  = 0;
                     $total_amount        = 0;
-                    $comment             =  ucfirst(self::VENDOR_NAME) . ' transaction: ref:' . $ref . "\r\n" . 'Authorized amount: ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . ')';
-                    $new_order_status_id = $this->config->get(self::CONFIG_CODE . '_authorize_status_id');
+                    $comment             = 'Lunar transaction: ref:' . $ref . "\r\n" . 'Authorized amount: ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . ')';
+                    $new_order_status_id = $this->config->get('payment_lunar_authorize_status_id');
                     $json['success']     = $this->language->get('success_message_authorized');
                 } else {
                     $type                = 'Capture';
                     $transaction_amount  = $formattedAmount['converted'];
                     $total_amount        = $formattedAmount['converted'];
-                    $comment             = ucfirst(self::VENDOR_NAME) . ' transaction: ref:' . $ref . "\r\n" . 'Captured amount: ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . ')';
-                    $new_order_status_id = $this->config->get(self::CONFIG_CODE . '_capture_status_id');
+                    $comment             = 'Lunar transaction: ref:' . $ref . "\r\n" . 'Captured amount: ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . ')';
+                    $new_order_status_id = $this->config->get('payment_lunar_capture_status_id');
                     $json['success']     = $this->language->get('success_message_captured');
                 }
 
                 /** Insert new transaction. */
-                $this->db->query("INSERT INTO `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`
+                $this->db->query("INSERT INTO `" . DB_PREFIX  . "lunar_transaction`
                                     SET order_id = '" . $order_info['order_id'] . "',
                                         transaction_id = '" . $ref . "',
                                         transaction_type = '" . $type . "',

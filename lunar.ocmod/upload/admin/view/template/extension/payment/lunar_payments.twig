@@ -167,7 +167,7 @@
 //--></script>
 
 
-<div class="modal fade" id="module-payments" role="dialog">
+<div class="modal fade" id="lunar_payments" role="dialog">
     <div class="modal-dialog modal-md vertical-align-center">
         <div class="modal-content">
             <div class="modal-header">
@@ -210,23 +210,23 @@
 <script type="text/javascript"><!--
     $('body').on('click', '.newtransaction a', function(e) {
         e.preventDefault();
-        $('#module-payments #plt-history').html('');
-        $('#module-payments .runtransaction').show();
-        $('#module-payments #plt-history').hide();
-        $('#module-payments #plt-transaction').show();
-        $('#module-payments #plt-result').html('');
-        $('#module-payments .modal-title').text('{{ popup_title_transaction }}');
-        $('#module-payments #plt-transaction > p').text('{{ popup_description }}');
-        $('#module-payments #plt-ref').val($(this).data('ref'));
-        $('#module-payments #plt-type').val($(this).data('type'));
-        $('#module-payments #plt-amount').val($(this).data('amount'));
-        $('#module-payments #plt-c').text($(this).data('currency'));
+        $('#lunar_payments #plt-history').html('');
+        $('#lunar_payments .runtransaction').show();
+        $('#lunar_payments #plt-history').hide();
+        $('#lunar_payments #plt-transaction').show();
+        $('#lunar_payments #plt-result').html('');
+        $('#lunar_payments .modal-title').text('{{ popup_title_transaction }}');
+        $('#lunar_payments #plt-transaction > p').text('{{ popup_description }}');
+        $('#lunar_payments #plt-ref').val($(this).data('ref'));
+        $('#lunar_payments #plt-type').val($(this).data('type'));
+        $('#lunar_payments #plt-amount').val($(this).data('amount'));
+        $('#lunar_payments #plt-c').text($(this).data('currency'));
         if($(this).data('type') == 'Refund'){
-            $('#module-payments #plt-amount').attr('readonly', false);
+            $('#lunar_payments #plt-amount').attr('readonly', false);
         } else {
-            $('#module-payments #plt-amount').attr('readonly', true);
+            $('#lunar_payments #plt-amount').attr('readonly', true);
         }
-        $('#module-payments').modal('show');
+        $('#lunar_payments').modal('show');
     });
 
     $('body').on('click', '.runtransaction', function(e) {
@@ -235,13 +235,13 @@
             url: 'index.php?route=extension/payment/lunar/transaction&{{ url_token_param }}',
             dataType: 'json',
             type: 'POST',
-            data: 'ref=' + $('#module-payments #plt-ref').val() + '&type=' + $('#module-payments #plt-type').val() + '&amount=' + $('#module-payments #plt-amount').val() ,
+            data: 'ref=' + $('#lunar_payments #plt-ref').val() + '&type=' + $('#lunar_payments #plt-type').val() + '&amount=' + $('#lunar_payments #plt-amount').val() ,
             success: function( data, textStatus, jQxhr ){
                 if(data.error){
-                    $('#module-payments #plt-result').html('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + data.error + '</div>');
+                    $('#lunar_payments #plt-result').html('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + data.error + '</div>');
                 } else {
-                    $('#module-payments #plt-result').html('<div class="alert alert-success"><i class="fa fa-exclamation-circle"></i> ' + data.success + '</div>');
-                    $('#module-payments .runtransaction').hide();
+                    $('#lunar_payments #plt-result').html('<div class="alert alert-success"><i class="fa fa-exclamation-circle"></i> ' + data.success + '</div>');
+                    $('#lunar_payments .runtransaction').hide();
                     $('#button_close').click(function(e) {
                         e.preventDefault();
                         location.reload();
@@ -250,29 +250,29 @@
             },
             error: function( jqXhr, textStatus, errorThrown ){
                 console.log( errorThrown );
-                $('#module-payments #plt-result').html('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + errorThrown + '</div>');
+                $('#lunar_payments #plt-result').html('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + errorThrown + '</div>');
             }
         });
     });
 
     $('body').on('click', '.gethistory', function(e) {
         e.preventDefault();
-        $('#module-payments #plt-history').html('');
-        $('#module-payments .runtransaction').hide();
-        $('#module-payments #plt-result').html('');
-        $('#module-payments #plt-transaction').hide();
-        $('#module-payments #plt-history').show();
-        $('#module-payments #plt-ref').val('');
-        $('#module-payments #plt-type').val('');
-        $('#module-payments #plt-amount').val('');
-        $('#module-payments #plt-c').text('');
-        $('#module-payments').modal('show');
+        $('#lunar_payments #plt-history').html('');
+        $('#lunar_payments .runtransaction').hide();
+        $('#lunar_payments #plt-result').html('');
+        $('#lunar_payments #plt-transaction').hide();
+        $('#lunar_payments #plt-history').show();
+        $('#lunar_payments #plt-ref').val('');
+        $('#lunar_payments #plt-type').val('');
+        $('#lunar_payments #plt-amount').val('');
+        $('#lunar_payments #plt-c').text('');
+        $('#lunar_payments').modal('show');
         $.ajax({
             url: $(this).attr('href'),
             dataType: 'html',
             type: 'GET',
             success: function( data, textStatus, jQxhr ){
-                $('#module-payments #plt-history').html(data);
+                $('#lunar_payments #plt-history').html(data);
             },
             error: function( jqXhr, textStatus, errorThrown ){
                 console.log( errorThrown );

@@ -1,21 +1,15 @@
 <?php
 
-
-if (!defined('THIS_EXTENSION_LIBRARY_PATH')) define('THIS_EXTENSION_LIBRARY_PATH', DIR_SYSTEM . 'library' . DIRECTORY_SEPARATOR. 'Lunar' .  DIRECTORY_SEPARATOR);
-
-require_once(THIS_EXTENSION_LIBRARY_PATH . 'Client.php');
-require_once(THIS_EXTENSION_LIBRARY_PATH . 'Transaction.php');
+require_once(DIR_SYSTEM . 'library/Lunar/Client.php');
+require_once(DIR_SYSTEM . 'library/Lunar/Transaction.php');
 
 use Lunar\Client;
 use Lunar\Transaction;
 
 class ControllerExtensionPaymentLunarTransaction extends Controller
 {
-    const VENDOR_NAME = 'lunar';
-    const CONFIG_CODE = 'payment_' . self::VENDOR_NAME;
-    const EXTENSION_PATH = 'extension/payment/' . self::VENDOR_NAME;
-    const THIS_MODEL_PATH = 'extension/payment/' . self::VENDOR_NAME . '_transaction';
-    const EXTENSION_MODEL_NAME = 'model_extension_payment_' . self::VENDOR_NAME . '_transaction';
+    const EXTENSION_PATH = 'extension/payment/lunar';
+    const THIS_MODEL_PATH = 'extension/payment/lunar_transaction';
 
     public function index()
     {
@@ -46,50 +40,47 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
          */
         if (isset($_GET['order_id']) && $order = $this->model_checkout_order->getOrder($_GET['order_id'])) {
 
-            if (self::VENDOR_NAME === $order['payment_code']) {
-
-                /**
-                 * Extract last transaction for current order.
-                 * - load transaction model
-                 * - get last transaction
-                 */
-                $this->load->model(self::THIS_MODEL_PATH);
-                $lastTransaction = $this->{self::EXTENSION_MODEL_NAME}->getLastModuleTransaction($order['order_id']);
-
-                /**
-                 * Create new Std object to be used in execute() method bellow.
-                 */
-                $this->orderData = new StdClass();
-
-                $this->orderData->order_store_id = $order['store_id'];
-                $this->orderData->order_id = $order['order_id'];
-                $this->orderData->ref = $lastTransaction['transaction_id'];
-                $this->orderData->amount = $order['total'];
-
-                /** Check type of transaction. */
-                if ($order['order_status_id'] === $this->config->get(self::CONFIG_CODE . '_capture_status_id')) {
-                    $this->orderData->type = 'Capture';
-
-                } elseif ($order['order_status_id'] === $this->config->get(self::CONFIG_CODE . '_refund_status_id')) {
-                    $this->orderData->type = 'Refund';
-
-                } elseif ($order['order_status_id'] === $this->config->get(self::CONFIG_CODE . '_void_status_id')) {
-                    $this->orderData->type = 'Void';
-
-                } else {
-                    /** Return that no other status is available for transaction. */
-                    return;
-                }
-
-                /**
-                 * Make the transaction.
-                 */
-                $this->transaction();
-
-            } else {
-                /** Return, if it is not a transaction of this  plugin. */
+            if ('lunar' != $order['payment_code']) {
                 return;
             }
+
+            /**
+             * Extract last transaction for current order.
+             * - load transaction model
+             * - get last transaction
+             */
+            $this->load->model(self::THIS_MODEL_PATH);
+            $lastTransaction = $this->model_extension_payment_lunar_transaction->getLastModuleTransaction($order['order_id']);
+
+            /**
+             * Create new Std object to be used in execute() method bellow.
+             */
+            $this->orderData = new StdClass();
+
+            $this->orderData->order_store_id = $order['store_id'];
+            $this->orderData->order_id = $order['order_id'];
+            $this->orderData->ref = $lastTransaction['transaction_id'];
+            $this->orderData->amount = $order['total'];
+
+            /** Check type of transaction. */
+            if ($order['order_status_id'] === $this->config->get('payment_lunar_capture_status_id')) {
+                $this->orderData->type = 'Capture';
+
+            } elseif ($order['order_status_id'] === $this->config->get('payment_lunar_refund_status_id')) {
+                $this->orderData->type = 'Refund';
+
+            } elseif ($order['order_status_id'] === $this->config->get('payment_lunar_void_status_id')) {
+                $this->orderData->type = 'Void';
+
+            } else {
+                /** Return that no other status is available for transaction. */
+                return;
+            }
+
+            /**
+             * Make the transaction.
+             */
+            $this->transaction();
         }
     }
 
@@ -115,8 +106,8 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
 
         $this->load->model(self::THIS_MODEL_PATH);
 
-        $this->logger = new Log(self::VENDOR_NAME . '.log');
-        $log = $this->config->get(self::CONFIG_CODE . '_logging') ? true : false;
+        $this->logger = new Log('lunar.log');
+        $log = $this->config->get('payment_lunar_logging') ? true : false;
 
         $orderStoreId = $this->orderData->order_store_id;
         $orderId      = $this->orderData->order_id;
@@ -124,7 +115,7 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
         $type         = $this->orderData->type;
         $input_amount = $this->orderData->amount;
 
-        $history = $this->{self::EXTENSION_MODEL_NAME}->getLastModuleTransaction($orderId);
+        $history = $this->model_extension_payment_lunar_transaction->getLastModuleTransaction($orderId);
         $history['transaction_currency'] = strtoupper($history['transaction_currency']);
 
         if (is_null($history)) {
@@ -142,10 +133,10 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
         }
 
 
-        $pluginSettingsData = $this->{self::EXTENSION_MODEL_NAME}->getSettingsData($orderStoreId);
-        $app_key = $pluginSettingsData[self::CONFIG_CODE . '_api_mode'] == 'live' ?
-                    $pluginSettingsData[self::CONFIG_CODE . '_app_key_live'] :
-                    $pluginSettingsData[self::CONFIG_CODE . '_app_key_test'];
+        $pluginSettingsData = $this->model_extension_payment_lunar_transaction->getSettingsData($orderStoreId);
+        $app_key = $pluginSettingsData['payment_lunar_api_mode'] == 'live' ?
+                    $pluginSettingsData['payment_lunar_app_key_live'] :
+                    $pluginSettingsData['payment_lunar_app_key_test'];
 
         Client::setKey($app_key);
         $trans_data = Transaction::fetch($ref);
@@ -268,12 +259,12 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
             );
 
             /** Add transaction. */
-            $this->{self::EXTENSION_MODEL_NAME}->addTransaction($data);
+            $this->model_extension_payment_lunar_transaction->addTransaction($data);
 
-            $new_order_status_id = $this->config->get(self::CONFIG_CODE . '_' . strtolower($type) . '_status_id');
+            $new_order_status_id = $this->config->get('payment_lunar_' . strtolower($type) . '_status_id');
 
             /** Update order history. */
-            $this->{self::EXTENSION_MODEL_NAME}->updateOrder($data, $new_order_status_id);
+            $this->model_extension_payment_lunar_transaction->updateOrder($data, $new_order_status_id);
 
             $json['success'] = sprintf($this->language->get('success_transaction_' . strtolower($type)), $formattedAmount['formatted']) . ' ' . $history['transaction_currency'];
 

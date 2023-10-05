@@ -1,7 +1,7 @@
 {% if active_mode=='test' %}
     <div class="alert alert-info attention"><i class="fa fa-exclamation-circle"></i>&nbsp;{{ warning_test_mode }}</div>
 {% endif %}
-<div data-amount="{{ amount }}" style="float: left" id="module-payment-widget"></div>
+<div data-amount="{{ amount }}" style="float: left" id="lunar-payment-widget"></div>
 <div class="buttons">
   <div class="pull-right">
     <input type="button" value="{{ button_confirm }}" id="button-confirm" class="btn btn-primary" />
@@ -44,9 +44,9 @@
           },
           platform: {
             name: 'opencart',
-            version: '{{ VERSION }}'
+            version: '{{ opencart_version }}'
           },
-          pluginVersion: '{{ plugin_version }}'
+          lunarPluginVersion: '{{ plugin_version }}'
         }
       }, function(err, res) {
         if (err)

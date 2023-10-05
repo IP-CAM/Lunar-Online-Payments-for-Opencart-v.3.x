@@ -2,33 +2,30 @@
 
 class ControllerExtensionPaymentLunar extends Controller
 {
+    const PLUGIN_VERSION = '1.0.0';
+    const EXTENSION_PATH = 'extension/payment/lunar';
+
     private $error = array();
     private $oc_token = '';
     private $validationPublicKeys = array ('live'=>array(),'test'=>array());
 
-    const VENDOR_NAME = 'lunar';
-    const CONFIG_CODE = 'payment_' . self::VENDOR_NAME;
-    const EXTENSION_PATH = 'extension/payment/' . self::VENDOR_NAME;
-    const EXTENSION_MODEL_NAME = 'model_extension_payment_' . self::VENDOR_NAME;
-    const THIS_EXTENSION_LIBRARY_PATH = DIR_SYSTEM . 'library' . DIRECTORY_SEPARATOR. 'Lunar' .  DIRECTORY_SEPARATOR;
-
     public function index()
     {
         $this->oc_token = version_compare(VERSION, '3.0.0.0', '>=') ? 'user_token' : $this->oc_token = 'token';
-        $this->load->language('extension/payment/' . self::VENDOR_NAME);
+        $this->load->language(self::EXTENSION_PATH);
         $this->load->model('tool/image');
-        $this->load->model('extension/payment/' . self::VENDOR_NAME);
+        $this->load->model(self::EXTENSION_PATH);
 
-        $this->{self::EXTENSION_MODEL_NAME}->install();
+        $this->model_extension_payment_lunar->install();
 
         $upgrade = false;
         $query   = $this->db->query("SELECT table_name
                                      FROM information_schema.tables
-                                     WHERE table_schema = '" . DB_DATABASE . "' AND table_name = '" . DB_PREFIX . self::VENDOR_NAME . "_admin'"
+                                     WHERE table_schema = '" . DB_DATABASE . "' AND table_name = '" . DB_PREFIX . "lunar_admin'"
                                     );
 
         if ($query->num_rows > 0) {
-            $this->{self::EXTENSION_MODEL_NAME}->upgrade();
+            $this->model_extension_payment_lunar->upgrade();
             $upgrade = true;
         }
 
@@ -36,7 +33,7 @@ class ControllerExtensionPaymentLunar extends Controller
             $data['success'] = $this->language->get('text_upgrade');
         }
 
-        if (is_null($this->config->get(self::CONFIG_CODE . '_method_title'))) {
+        if (is_null($this->config->get('payment_lunar_method_title'))) {
             $this->session->data['error_warning'] = $this->language->get('text_setting_review_required');
         }
 
@@ -46,8 +43,9 @@ class ControllerExtensionPaymentLunar extends Controller
 
 
         /** Get all opencart stores, including default. */
-        $data['stores']   = $this->getAllStoresAsArray();
-
+        $data['stores'] = $this->getAllStoresAsArray();
+        
+        $data['plugin_version'] = self::PLUGIN_VERSION;
 
         $this->document->setTitle($this->language->get('heading_title'));
         $data['heading_title'] = $this->language->get('heading_title');
@@ -161,148 +159,143 @@ class ControllerExtensionPaymentLunar extends Controller
             $data['success'] = '';
         }
 
-        /**
-         * The POST keys (from input name) corresponds to the config key saved in database settings table
-         * We name data keys with generic "module_", that we do not need to name variables specifically in template files
-         */
-
-        if (isset($this->request->post[self::CONFIG_CODE . '_method_title'])) {
-            $data['module_method_title'] = $this->request->post[self::CONFIG_CODE . '_method_title'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_method_title'))) {
-            $data['module_method_title'] = $this->config->get(self::CONFIG_CODE . '_method_title');
+        if (isset($this->request->post['payment_lunar_method_title'])) {
+            $data['payment_lunar_method_title'] = $this->request->post['payment_lunar_method_title'];
+        } elseif (! is_null($this->config->get('payment_lunar_method_title'))) {
+            $data['payment_lunar_method_title'] = $this->config->get('payment_lunar_method_title');
         } else {
-            $data['module_method_title'] = $this->language->get('default_payment_method_title');
+            $data['payment_lunar_method_title'] = $this->language->get('default_payment_method_title');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_checkout_title'])) {
-            $data['module_checkout_title'] = $this->request->post[self::CONFIG_CODE . '_checkout_title'];
+        if (isset($this->request->post['payment_lunar_checkout_title'])) {
+            $data['payment_lunar_checkout_title'] = $this->request->post['payment_lunar_checkout_title'];
         } else {
-            $data['module_checkout_title'] = $this->config->get(self::CONFIG_CODE . '_checkout_title');
+            $data['payment_lunar_checkout_title'] = $this->config->get('payment_lunar_checkout_title');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_checkout_description'])) {
-            $data['module_checkout_description'] = $this->request->post[self::CONFIG_CODE . '_checkout_description'];
+        if (isset($this->request->post['payment_lunar_checkout_description'])) {
+            $data['payment_lunar_checkout_description'] = $this->request->post['payment_lunar_checkout_description'];
         } else {
-            $data['module_checkout_description'] = $this->config->get(self::CONFIG_CODE . '_checkout_description');
+            $data['payment_lunar_checkout_description'] = $this->config->get('payment_lunar_checkout_description');
         }
 
-        $data['ccLogos'] = $this->{self::EXTENSION_MODEL_NAME}->getCcLogos();
-        if (isset($this->request->post[self::CONFIG_CODE . '_checkout_cc_logo'])) {
-            $data['module_checkout_cc_logo'] = $this->request->post[self::CONFIG_CODE . '_checkout_cc_logo'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_checkout_cc_logo'))) {
-            $data['module_checkout_cc_logo'] = $this->config->get(self::CONFIG_CODE . '_checkout_cc_logo');
+        $data['ccLogos'] = $this->model_extension_payment_lunar->getCcLogos();
+        if (isset($this->request->post['payment_lunar_checkout_cc_logo'])) {
+            $data['payment_lunar_checkout_cc_logo'] = $this->request->post['payment_lunar_checkout_cc_logo'];
+        } elseif (! is_null($this->config->get('payment_lunar_checkout_cc_logo'))) {
+            $data['payment_lunar_checkout_cc_logo'] = $this->config->get('payment_lunar_checkout_cc_logo');
         } else {
-            $data['module_checkout_cc_logo'] = $this->language->get('default_' . self::CONFIG_CODE . '_checkout_cc_logo');
+            $data['payment_lunar_checkout_cc_logo'] = $this->language->get('default_payment_lunar_checkout_cc_logo');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_checkout_display_mode'])) {
-            $data['module_checkout_display_mode'] = $this->request->post[self::CONFIG_CODE . '_checkout_display_mode'];
+        if (isset($this->request->post['payment_lunar_checkout_display_mode'])) {
+            $data['payment_lunar_checkout_display_mode'] = $this->request->post['payment_lunar_checkout_display_mode'];
         } else {
-            $data['module_checkout_display_mode'] = $this->config->get(self::CONFIG_CODE . '_checkout_display_mode');
+            $data['payment_lunar_checkout_display_mode'] = $this->config->get('payment_lunar_checkout_display_mode');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_app_key_test'])) {
-            $data['module_app_key_test'] = $this->request->post[self::CONFIG_CODE . '_app_key_test'];
+        if (isset($this->request->post['payment_lunar_app_key_test'])) {
+            $data['payment_lunar_app_key_test'] = $this->request->post['payment_lunar_app_key_test'];
         } else {
-            $data['module_app_key_test'] = $this->config->get(self::CONFIG_CODE . '_app_key_test');
+            $data['payment_lunar_app_key_test'] = $this->config->get('payment_lunar_app_key_test');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_public_key_test'])) {
-            $data['module_public_key_test'] = $this->request->post[self::CONFIG_CODE . '_public_key_test'];
+        if (isset($this->request->post['payment_lunar_public_key_test'])) {
+            $data['payment_lunar_public_key_test'] = $this->request->post['payment_lunar_public_key_test'];
         } else {
-            $data['module_public_key_test'] = $this->config->get(self::CONFIG_CODE . '_public_key_test');
+            $data['payment_lunar_public_key_test'] = $this->config->get('payment_lunar_public_key_test');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_app_key_live'])) {
-            $data['module_app_key_live'] = $this->request->post[self::CONFIG_CODE . '_app_key_live'];
+        if (isset($this->request->post['payment_lunar_app_key_live'])) {
+            $data['payment_lunar_app_key_live'] = $this->request->post['payment_lunar_app_key_live'];
         } else {
-            $data['module_app_key_live'] = $this->config->get(self::CONFIG_CODE . '_app_key_live');
+            $data['payment_lunar_app_key_live'] = $this->config->get('payment_lunar_app_key_live');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_public_key_live'])) {
-            $data['module_public_key_live'] = $this->request->post[self::CONFIG_CODE . '_public_key_live'];
+        if (isset($this->request->post['payment_lunar_public_key_live'])) {
+            $data['payment_lunar_public_key_live'] = $this->request->post['payment_lunar_public_key_live'];
         } else {
-            $data['module_public_key_live'] = $this->config->get(self::CONFIG_CODE . '_public_key_live');
+            $data['payment_lunar_public_key_live'] = $this->config->get('payment_lunar_public_key_live');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_api_mode'])) {
-            $data['module_api_mode'] = $this->request->post[self::CONFIG_CODE . '_api_mode'];
+        if (isset($this->request->post['payment_lunar_api_mode'])) {
+            $data['payment_lunar_api_mode'] = $this->request->post['payment_lunar_api_mode'];
         } else {
-            $data['module_api_mode'] = $this->config->get(self::CONFIG_CODE . '_api_mode');
+            $data['payment_lunar_api_mode'] = $this->config->get('payment_lunar_api_mode');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_capture_mode'])) {
-            $data['module_capture_mode'] = $this->request->post[self::CONFIG_CODE . '_capture_mode'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_capture_mode'))) {
-            $data['module_capture_mode'] = $this->config->get(self::CONFIG_CODE . '_capture_mode');
+        if (isset($this->request->post['payment_lunar_capture_mode'])) {
+            $data['payment_lunar_capture_mode'] = $this->request->post['payment_lunar_capture_mode'];
+        } elseif (! is_null($this->config->get('payment_lunar_capture_mode'))) {
+            $data['payment_lunar_capture_mode'] = $this->config->get('payment_lunar_capture_mode');
         } else {
-            $data['module_capture_mode'] = 'instant';
+            $data['payment_lunar_capture_mode'] = 'instant';
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_authorize_status_id'])) {
-            $data['module_authorize_status_id'] = $this->request->post[self::CONFIG_CODE . '_authorize_status_id'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_authorize_status_id'))) {
-            $data['module_authorize_status_id'] = $this->config->get(self::CONFIG_CODE . '_authorize_status_id');
+        if (isset($this->request->post['payment_lunar_authorize_status_id'])) {
+            $data['payment_lunar_authorize_status_id'] = $this->request->post['payment_lunar_authorize_status_id'];
+        } elseif (! is_null($this->config->get('payment_lunar_authorize_status_id'))) {
+            $data['payment_lunar_authorize_status_id'] = $this->config->get('payment_lunar_authorize_status_id');
         } else {
-            $data['module_authorize_status_id'] = 1;
+            $data['payment_lunar_authorize_status_id'] = 1;
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_capture_status_id'])) {
-            $data['module_capture_status_id'] = $this->request->post[self::CONFIG_CODE . '_capture_status_id'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_capture_status_id'))) {
-            $data['module_capture_status_id'] = $this->config->get(self::CONFIG_CODE . '_capture_status_id');
+        if (isset($this->request->post['payment_lunar_capture_status_id'])) {
+            $data['payment_lunar_capture_status_id'] = $this->request->post['payment_lunar_capture_status_id'];
+        } elseif (! is_null($this->config->get('payment_lunar_capture_status_id'))) {
+            $data['payment_lunar_capture_status_id'] = $this->config->get('payment_lunar_capture_status_id');
         } else {
-            $data['module_capture_status_id'] = 5;
+            $data['payment_lunar_capture_status_id'] = 5;
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_refund_status_id'])) {
-            $data['module_refund_status_id'] = $this->request->post[self::CONFIG_CODE . '_refund_status_id'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_refund_status_id'))) {
-            $data['module_refund_status_id'] = $this->config->get(self::CONFIG_CODE . '_refund_status_id');
+        if (isset($this->request->post['payment_lunar_refund_status_id'])) {
+            $data['payment_lunar_refund_status_id'] = $this->request->post['payment_lunar_refund_status_id'];
+        } elseif (! is_null($this->config->get('payment_lunar_refund_status_id'))) {
+            $data['payment_lunar_refund_status_id'] = $this->config->get('payment_lunar_refund_status_id');
         } else {
-            $data['module_refund_status_id'] = 11;
+            $data['payment_lunar_refund_status_id'] = 11;
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_void_status_id'])) {
-            $data['module_void_status_id'] = $this->request->post[self::CONFIG_CODE . '_void_status_id'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_void_status_id'))) {
-            $data['module_void_status_id'] = $this->config->get(self::CONFIG_CODE . '_void_status_id');
+        if (isset($this->request->post['payment_lunar_void_status_id'])) {
+            $data['payment_lunar_void_status_id'] = $this->request->post['payment_lunar_void_status_id'];
+        } elseif (! is_null($this->config->get('payment_lunar_void_status_id'))) {
+            $data['payment_lunar_void_status_id'] = $this->config->get('payment_lunar_void_status_id');
         } else {
-            $data['module_void_status_id'] = 16;
+            $data['payment_lunar_void_status_id'] = 16;
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_status'])) {
-            $data['module_status'] = $this->request->post[self::CONFIG_CODE . '_status'];
+        if (isset($this->request->post['payment_lunar_status'])) {
+            $data['payment_lunar_status'] = $this->request->post['payment_lunar_status'];
         } else {
-            $data['module_status'] = $this->config->get(self::CONFIG_CODE . '_status');
+            $data['payment_lunar_status'] = $this->config->get('payment_lunar_status');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_logging'])) {
-            $data['module_logging'] = $this->request->post[self::CONFIG_CODE . '_logging'];
+        if (isset($this->request->post['payment_lunar_logging'])) {
+            $data['payment_lunar_logging'] = $this->request->post['payment_lunar_logging'];
         } else {
-            $data['module_logging'] = $this->config->get(self::CONFIG_CODE . '_logging');
+            $data['payment_lunar_logging'] = $this->config->get('payment_lunar_logging');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_minimum_total'])) {
-            $data['module_minimum_total'] = $this->request->post[self::CONFIG_CODE . '_minimum_total'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_minimum_total'))) {
-            $data['module_minimum_total'] = $this->config->get(self::CONFIG_CODE . '_minimum_total');
+        if (isset($this->request->post['payment_lunar_minimum_total'])) {
+            $data['payment_lunar_minimum_total'] = $this->request->post['payment_lunar_minimum_total'];
+        } elseif (! is_null($this->config->get('payment_lunar_minimum_total'))) {
+            $data['payment_lunar_minimum_total'] = $this->config->get('payment_lunar_minimum_total');
         } else {
-            $data['module_minimum_total'] = 0;
+            $data['payment_lunar_minimum_total'] = 0;
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_geo_zone'])) {
-            $data['module_geo_zone'] = $this->request->post[self::CONFIG_CODE . '_geo_zone'];
+        if (isset($this->request->post['payment_lunar_geo_zone'])) {
+            $data['payment_lunar_geo_zone'] = $this->request->post['payment_lunar_geo_zone'];
         } else {
-            $data['module_geo_zone'] = $this->config->get(self::CONFIG_CODE . '_geo_zone');
+            $data['payment_lunar_geo_zone'] = $this->config->get('payment_lunar_geo_zone');
         }
 
-        if (isset($this->request->post[self::CONFIG_CODE . '_sort_order'])) {
-            $data['module_sort_order'] = $this->request->post[self::CONFIG_CODE . '_sort_order'];
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_sort_order'))) {
-            $data['module_sort_order'] = $this->config->get(self::CONFIG_CODE . '_sort_order');
+        if (isset($this->request->post['payment_lunar_sort_order'])) {
+            $data['payment_lunar_sort_order'] = $this->request->post['payment_lunar_sort_order'];
+        } elseif (! is_null($this->config->get('payment_lunar_sort_order'))) {
+            $data['payment_lunar_sort_order'] = $this->config->get('payment_lunar_sort_order');
         } else {
-            $data['module_sort_order'] = 0;
+            $data['payment_lunar_sort_order'] = 0;
         }
 
         /** Select option in stores dropdown field. */
@@ -335,7 +328,7 @@ class ControllerExtensionPaymentLunar extends Controller
 
         $data['action']          = $this->url->link(self::EXTENSION_PATH, $this->oc_token . '=' . $this->session->data[ $this->oc_token ], true);
         $data['cancel']          = $this->url->link('marketplace/extension', $this->oc_token . '=' . $this->session->data[ $this->oc_token ] . '&type=payment', true);
-        $data['module_payments'] = $this->url->link(self::EXTENSION_PATH . '/payments', $this->oc_token . '=' . $this->session->data[ $this->oc_token ], true);
+        $data['payment_lunar_payments'] = $this->url->link(self::EXTENSION_PATH . '/payments', $this->oc_token . '=' . $this->session->data[ $this->oc_token ], true);
 
 
         $this->load->model('localisation/order_status');
@@ -362,7 +355,7 @@ class ControllerExtensionPaymentLunar extends Controller
     }
 
 
-    /** Get plugin payments. */
+    /** Get lunar payments. */
     public function payments()
     {
         $this->oc_token = version_compare(VERSION, '3.0.0.0', '>=') ? 'user_token' : $this->oc_token = 'token';
@@ -370,10 +363,10 @@ class ControllerExtensionPaymentLunar extends Controller
         $this->load->model(self::EXTENSION_PATH);
         $this->load->model('setting/setting');
 
-        $this->{self::EXTENSION_MODEL_NAME}->install();
-        $upgrade = false;
-        $query   = $this->db->query("SELECT table_name FROM information_schema.tables WHERE table_schema = '" . DB_DATABASE . "' AND table_name = '" . DB_PREFIX . self::VENDOR_NAME . "_admin'");
-        if ($query->num_rows > 0 || is_null($this->config->get(self::CONFIG_CODE . '_method_title'))) {
+        $this->model_extension_payment_lunar->install();
+        
+        $query   = $this->db->query("SELECT table_name FROM information_schema.tables WHERE table_schema = '" . DB_DATABASE . "' AND table_name = '" . DB_PREFIX . "lunar_admin'");
+        if ($query->num_rows > 0 || is_null($this->config->get('payment_lunar_method_title'))) {
             $redirect_url                         = $this->url->link(self::EXTENSION_PATH, $this->oc_token . '=' . $this->session->data[ $this->oc_token ], true);
             $this->session->data['error_warning'] = $this->language->get('text_setting_review_required');
             $this->response->redirect($redirect_url);
@@ -413,23 +406,23 @@ class ControllerExtensionPaymentLunar extends Controller
         $data['popup_execute']          = $this->language->get('popup_execute');
 
         $data['error_warning'] = '';
-        if (! is_null($this->config->get(self::CONFIG_CODE . '_api_mode')) && $this->config->get(self::CONFIG_CODE . '_api_mode') == 'live') {
-            if (is_null($this->config->get(self::CONFIG_CODE . '_public_key_live'))
-                 || $this->config->get(self::CONFIG_CODE . '_public_key_live') == ''
-                 || is_null($this->config->get(self::CONFIG_CODE . '_app_key_live'))
-                 || $this->config->get(self::CONFIG_CODE . '_app_key_live') == '' ) {
+        if (! is_null($this->config->get('payment_lunar_api_mode')) && $this->config->get('payment_lunar_api_mode') == 'live') {
+            if (is_null($this->config->get('payment_lunar_public_key_live'))
+                 || $this->config->get('payment_lunar_public_key_live') == ''
+                 || is_null($this->config->get('payment_lunar_app_key_live'))
+                 || $this->config->get('payment_lunar_app_key_live') == '' ) {
                 $data['error_warning'] = $this->language->get('error_live_keys');
             } else {
-                $data['public_key'] = $this->language->get(self::CONFIG_CODE . '_public_key_live');
+                $data['public_key'] = $this->language->get('payment_lunar_public_key_live');
             }
-        } elseif (! is_null($this->config->get(self::CONFIG_CODE . '_api_mode')) && $this->config->get(self::CONFIG_CODE . '_api_mode') == 'test') {
-            if (is_null($this->config->get(self::CONFIG_CODE . '_public_key_test'))
-                 || $this->config->get(self::CONFIG_CODE . '_public_key_test') == ''
-                 || is_null($this->config->get(self::CONFIG_CODE . '_app_key_test'))
-                 || $this->config->get(self::CONFIG_CODE . '_app_key_test') == '' ) {
+        } elseif (! is_null($this->config->get('payment_lunar_api_mode')) && $this->config->get('payment_lunar_api_mode') == 'test') {
+            if (is_null($this->config->get('payment_lunar_public_key_test'))
+                 || $this->config->get('payment_lunar_public_key_test') == ''
+                 || is_null($this->config->get('payment_lunar_app_key_test'))
+                 || $this->config->get('payment_lunar_app_key_test') == '' ) {
                 $data['error_warning'] = $this->language->get('error_test_keys');
             } else {
-                $data['public_key'] = $this->language->get(self::CONFIG_CODE . '_public_key_test');
+                $data['public_key'] = $this->language->get('payment_lunar_public_key_test');
             }
         } else {
             $data['error_warning'] = $this->language->get('error_setup');
@@ -528,8 +521,8 @@ class ControllerExtensionPaymentLunar extends Controller
         );
 
         $data['transactions']           = array();
-        $transactions_total             = $this->{self::EXTENSION_MODEL_NAME}->getTotalTransactions($filter_data);
-        $results                        = $this->{self::EXTENSION_MODEL_NAME}->getTransactions($filter_data);
+        $transactions_total             = $this->model_extension_payment_lunar->getTotalTransactions($filter_data);
+        $results                        = $this->model_extension_payment_lunar->getTransactions($filter_data);
 
         foreach ($results as $result) {
             $result['transaction_currency'] = strtoupper($result['transaction_currency']);
@@ -538,7 +531,7 @@ class ControllerExtensionPaymentLunar extends Controller
             $total_amount       = $this->getFormattedAmounts($result['total_amount'], $result['transaction_currency']);
 
             $data['transactions'][] = array(
-                self::VENDOR_NAME . '_transaction_id' => $result[self::VENDOR_NAME . '_transaction_id'],
+                'lunar_transaction_id' => $result['lunar_transaction_id'],
                 'order_id'               => $result['order_id'],
                 'transaction_id'         => $result['transaction_id'],
                 'transaction_type'       => $result['transaction_type'],
@@ -633,7 +626,7 @@ class ControllerExtensionPaymentLunar extends Controller
         $data['sort']  = $sort;
         $data['order'] = $order;
 
-        $data['transaction_types'] = $this->{self::EXTENSION_MODEL_NAME}->getTransactionTypes();
+        $data['transaction_types'] = $this->model_extension_payment_lunar->getTransactionTypes();
 
         $data['header']      = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
@@ -657,16 +650,16 @@ class ControllerExtensionPaymentLunar extends Controller
 
         $this->load->language(self::EXTENSION_PATH . '_payments');
         $this->load->model(self::EXTENSION_PATH);
-        $this->logger = new Log(self::VENDOR_NAME . '.log');
-        $log          = $this->config->get(self::CONFIG_CODE . '_logging') ? true : false;
+        $this->logger = new Log('lunar.log');
+        $log          = $this->config->get('payment_lunar_logging') ? true : false;
 
-        require_once(self::THIS_EXTENSION_LIBRARY_PATH . 'Client.php');
+        require_once(DIR_SYSTEM . 'library/Lunar/Client.php');
 
         $ref          = $this->request->post['ref'];
         $type         = $this->request->post['type'];
         $input_amount = $this->request->post['amount'];
 
-        $history = $this->{self::EXTENSION_MODEL_NAME}->getLastTransaction($ref);
+        $history = $this->model_extension_payment_lunar->getLastTransaction($ref);
         $history['transaction_currency'] = strtoupper($history['transaction_currency']);
 
         if (is_null($history)) {
@@ -683,7 +676,7 @@ class ControllerExtensionPaymentLunar extends Controller
             $this->logger->write('Transaction Refference: ' . $ref);
         }
 
-        $app_key = $this->config->get(self::CONFIG_CODE . '_api_mode') == 'live' ? $this->config->get(self::CONFIG_CODE . '_app_key_live') : $this->config->get(self::CONFIG_CODE . '_app_key_test');
+        $app_key = $this->config->get('payment_lunar_api_mode') == 'live' ? $this->config->get('payment_lunar_app_key_live') : $this->config->get('payment_lunar_app_key_test');
 
         Lunar\Client::setKey($app_key);
 
@@ -792,10 +785,10 @@ class ControllerExtensionPaymentLunar extends Controller
                 'history'              => '0',
                 'date_added'           => 'NOW()'
             );
-            $this->{self::EXTENSION_MODEL_NAME}->addTransaction($data);
+            $this->model_extension_payment_lunar->addTransaction($data);
 
-            $new_order_status_id = $this->config->get(self::CONFIG_CODE . '_' . strtolower($type) . '_status_id');
-            $this->{self::EXTENSION_MODEL_NAME}->updateOrder($data, $new_order_status_id);
+            $new_order_status_id = $this->config->get('payment_lunar_' . strtolower($type) . '_status_id');
+            $this->model_extension_payment_lunar->updateOrder($data, $new_order_status_id);
 
             $json['success'] = sprintf($this->language->get('success_transaction_' . strtolower($type)), $formattedAmount['formatted']) . ' ' . $history['transaction_currency'];
 
@@ -817,41 +810,41 @@ class ControllerExtensionPaymentLunar extends Controller
         if (! $this->user->hasPermission('modify', self::EXTENSION_PATH)) {
             $this->error['warning'] = $this->language->get('error_permission');
         }
-        if ($this->request->post[self::CONFIG_CODE . '_method_title'] == '') {
+        if ($this->request->post['payment_lunar_method_title'] == '') {
             $this->error['error_payment_method_title'] = $this->language->get('error_payment_method_title');
         }
 
         /** Include the last version API via autoloader */
-        require_once(self::THIS_EXTENSION_LIBRARY_PATH . 'vendor/autoload.php');
+        require_once(DIR_SYSTEM . 'library/Lunar/vendor/autoload.php');
 
-        if ($this->request->post[self::CONFIG_CODE . '_api_mode'] == 'live') {
-            $error_app_key_live = $this->validateAppKeyField($this->request->post[self::CONFIG_CODE . '_app_key_live'],'live');
+        if ($this->request->post['payment_lunar_api_mode'] == 'live') {
+            $error_app_key_live = $this->validateAppKeyField($this->request->post['payment_lunar_app_key_live'],'live');
             if($error_app_key_live){
                 $this->error['error_app_key_live'] = $error_app_key_live;
             }
 
-            $error_public_key_live = $this->validatePublicKeyField($this->request->post[self::CONFIG_CODE . '_public_key_live'],'live');
+            $error_public_key_live = $this->validatePublicKeyField($this->request->post['payment_lunar_public_key_live'],'live');
             if($error_public_key_live){
                 $this->error['error_public_key_live'] =$error_public_key_live;
             }
 
         } else {
-            $error_app_key_test = $this->validateAppKeyField($this->request->post[self::CONFIG_CODE . '_app_key_test'],'test');
+            $error_app_key_test = $this->validateAppKeyField($this->request->post['payment_lunar_app_key_test'],'test');
             if($error_app_key_test){
                 $this->error['error_app_key_test'] = $error_app_key_test;
             }
 
-            $error_public_key_test = $this->validatePublicKeyField($this->request->post[self::CONFIG_CODE . '_public_key_test'],'test');
+            $error_public_key_test = $this->validatePublicKeyField($this->request->post['payment_lunar_public_key_test'],'test');
             if($error_public_key_test){
                 $this->error['error_public_key_test'] = $error_public_key_test;
             }
         }
 
-        if (! is_numeric($this->request->post[self::CONFIG_CODE . '_minimum_total'])) {
-            $this->request->post[self::CONFIG_CODE . '_minimum_total'] = 0;
+        if (! is_numeric($this->request->post['payment_lunar_minimum_total'])) {
+            $this->request->post['payment_lunar_minimum_total'] = 0;
         }
-        if (! is_numeric($this->request->post[self::CONFIG_CODE . '_sort_order'])) {
-            $this->request->post[self::CONFIG_CODE . '_sort_order'] = 0;
+        if (! is_numeric($this->request->post['payment_lunar_sort_order'])) {
+            $this->request->post['payment_lunar_sort_order'] = 0;
         }
         if ($this->error && ! isset($this->error['warning'])) {
             $this->error['warning'] = $this->language->get('error_warning');
@@ -1012,7 +1005,7 @@ class ControllerExtensionPaymentLunar extends Controller
 
         } else {
             /** Returns an object with key as vendor_data_error. */
-            echo '{' . self::VENDOR_NAME . '"_data_error": "Operation not allowed"}';
+            echo '{"lunar_data_error": "Operation not allowed"}';
         }
     }
 
@@ -1024,7 +1017,7 @@ class ControllerExtensionPaymentLunar extends Controller
         $this->load->model('setting/setting');
         $settingModel = $this->model_setting_setting;
 
-        return $settingModel->getSetting(self::CONFIG_CODE, $storeId);
+        return $settingModel->getSetting('payment_lunar', $storeId);
     }
 
     /**
@@ -1038,7 +1031,7 @@ class ControllerExtensionPaymentLunar extends Controller
         /** Push default store to stores array. It is not extracted with getStores(). */
         $storesArray[] = [
             'store_id' => 0,
-            'name'     => $this->config->get('CONFIG_CODE') . ' ' . $this->language->get('text_default'),
+            'name'     => $this->config->get('config_name') . ' ' . $this->language->get('text_default'),
         ];
 
         $this->load->model('setting/store');
@@ -1068,14 +1061,14 @@ class ControllerExtensionPaymentLunar extends Controller
             $selectedStoreId = $this->request->post['config_selected_store'];
 
             if (version_compare(VERSION, '3.0.0.0', '>=')) {
-                $pluginSettingsCode = self::CONFIG_CODE;
+                $pluginSettingsCode = 'payment_lunar';
                 $this->model_setting_setting->editSetting($pluginSettingsCode, $this->request->post, $selectedStoreId);
                 $redirect_url = $this->url->link('marketplace/extension', $this->oc_token . '=' . $this->session->data[ $this->oc_token ] . '&type=payment', true);
             } else {
-                $pluginSettingsCode = self::VENDOR_NAME;
-                $this->request->post[self::VENDOR_NAME . '_status']     = $this->request->post[self::CONFIG_CODE . '_status'];
-                $this->request->post[self::VENDOR_NAME . '_sort_order'] = $this->request->post[self::CONFIG_CODE . '_sort_order'];
-                $this->model_setting_setting->editSetting(self::VENDOR_NAME, $this->request->post, $selectedStoreId);
+                $pluginSettingsCode = 'lunar';
+                $this->request->post['lunar_status']     = $this->request->post['payment_lunar_status'];
+                $this->request->post['lunar_sort_order'] = $this->request->post['payment_lunar_sort_order'];
+                $this->model_setting_setting->editSetting('lunar', $this->request->post, $selectedStoreId);
                 $redirect_url = $this->url->link('extension/extension', $this->oc_token . '=' . $this->session->data[ $this->oc_token ] . '&type=payment', true);
             }
 

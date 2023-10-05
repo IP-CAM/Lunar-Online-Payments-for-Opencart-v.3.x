@@ -1,7 +1,7 @@
 <?php if($active_mode=='test'){ ?>
     <div class="alert alert-info attention"><i class="fa fa-exclamation-circle"></i>&nbsp;<?php echo $warning_test_mode; ?></div>
 <?php } ?>
-<div data-amount="<?php echo $amount; ?>" style="float: left" id="module-payment-widget"></div>
+<div data-amount="<?php echo $amount; ?>" style="float: left" id="lunar-payment-widget"></div>
 <div class="buttons">
   <div class="pull-right">
     <input type="button" value="<?php echo $button_confirm; ?>" id="button-confirm" class="btn btn-primary" />
@@ -44,9 +44,9 @@
           },
           platform: {
             name: 'opencart',
-            version: '<?php echo $VERSION; ?>'
+            version: '<?php echo $opencart_version; ?>'
           },
-          pluginVersion: '<?php echo $plugin_version; ?>'
+          lunarPluginVersion: '<?php echo $plugin_version; ?>'
         }
       }, function(err, res) {
         if (err)

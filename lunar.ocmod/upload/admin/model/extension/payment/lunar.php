@@ -2,23 +2,22 @@
 
 class ModelExtensionPaymentLunar extends Model
 {
-    const VENDOR_NAME = 'lunar';
-    const CONFIG_CODE = 'payment_' . self::VENDOR_NAME;
+    const LUNAR_DB_TABLE = DB_PREFIX . 'lunar_transaction';
 
     public function install()
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . self::VENDOR_NAME . "_transaction` (
-         `" . self::VENDOR_NAME . "_transaction_id` int(11) NOT NULL AUTO_INCREMENT,
-         `order_id` int(11) NOT NULL,
-         `transaction_id` char(50) NOT NULL,
-         `transaction_type` char(10) NOT NULL,
+        $this->db->query("CREATE TABLE IF NOT EXISTS `" . self::LUNAR_DB_TABLE . "` (
+         `lunar_transaction_id` int(11) NOT NULL AUTO_INCREMENT,
+         `order_id`             int(11) NOT NULL,
+         `transaction_id`       char(50) NOT NULL,
+         `transaction_type`     char(10) NOT NULL,
          `transaction_currency` char(5) NOT NULL,
-         `order_amount` decimal(15,4) NOT NULL,
-         `transaction_amount` decimal(15,4) NOT NULL,
-         `total_amount` decimal(15,4) NOT NULL,
-         `history` tinyint(1) NOT NULL,
-         `date_added` datetime NOT NULL,
-         PRIMARY KEY (`" . self::VENDOR_NAME . "_transaction_id`)
+         `order_amount`         decimal(15,4) NOT NULL,
+         `transaction_amount`   decimal(15,4) NOT NULL,
+         `total_amount`         decimal(15,4) NOT NULL,
+         `history`              tinyint(1) NOT NULL,
+         `date_added`           datetime NOT NULL,
+         PRIMARY KEY (`lunar_transaction_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
 
         $this->addEvents();
@@ -26,7 +25,7 @@ class ModelExtensionPaymentLunar extends Model
 
     public function uninstall()
     {
-        // $this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`");
+        // $this->db->query("DROP TABLE IF EXISTS `" . self::LUNAR_DB_TABLE . "`");
 
         $this->deleteEvents();
     }
@@ -37,11 +36,11 @@ class ModelExtensionPaymentLunar extends Model
         $this->load->model('setting/event');
 
         /** Check if event is in database 'event' table (the result of getEventByCode is an array). */
-        if(empty($this->model_setting_event->getEventByCode(self::VENDOR_NAME . '_do_transaction_on_order_status_change'))) {
+        if(empty($this->model_setting_event->getEventByCode('lunar_do_transaction_on_order_status_change'))) {
             /** Make sure that the event is introduce only once in DB. */
             /** addEvent($code, $trigger, $action, $status = 1, $sort_order = 0); */
             $this->model_setting_event->addEvent(
-                self::VENDOR_NAME . '_do_transaction_on_order_status_change',
+                'lunar_do_transaction_on_order_status_change',
                 'catalog/controller/api/order/history/after',
                 'extension/payment/lunar_transaction/doTransactionOnOrderStatusChange'
             );
@@ -52,88 +51,88 @@ class ModelExtensionPaymentLunar extends Model
     {
         $this->load->model('setting/event');
         /** deleteEventByCode($code); */
-        $this->model_setting_event->deleteEventByCode(self::VENDOR_NAME . '_do_transaction_on_order_status_change');
+        $this->model_setting_event->deleteEventByCode('lunar_do_transaction_on_order_status_change');
     }
     /********************************* EVENTS ADD/DELETE END *************************************/
 
     /**
      * UPGARDE this module transactions table
-     * from {vendor}_admin to {vendor}_transaction
+     * from lunar_admin to lunar_transaction
      */
     public function upgrade()
     {
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_status'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_status');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_status', $val);
-            $this->config->set(self::CONFIG_CODE . '_status', $val);
+        if (!is_null($this->config->get('lunar_status'))) {
+            $val = $this->config->get('lunar_status');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_status', $val);
+            $this->config->set('payment_lunar_status', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_payment_method_title'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_payment_method_title');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_method_title', $val);
-            $this->config->set(self::CONFIG_CODE . '_method_title', $val);
+        if (!is_null($this->config->get('lunar_payment_method_title'))) {
+            $val = $this->config->get('lunar_payment_method_title');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_method_title', $val);
+            $this->config->set('payment_lunar_method_title', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_title'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_title');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_checkout_title', $val);
-            $this->config->set(self::CONFIG_CODE . '_checkout_title', $val);
+        if (!is_null($this->config->get('lunar_title'))) {
+            $val = $this->config->get('lunar_title');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_checkout_title', $val);
+            $this->config->set('payment_lunar_checkout_title', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_description'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_description');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_checkout_description', $val);
-            $this->config->set(self::CONFIG_CODE . '_checkout_description', $val);
+        if (!is_null($this->config->get('lunar_description'))) {
+            $val = $this->config->get('lunar_description');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_checkout_description', $val);
+            $this->config->set('payment_lunar_checkout_description', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_mode'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_mode');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_api_mode', $val);
-            $this->config->set(self::CONFIG_CODE . '_api_mode', $val);
+        if (!is_null($this->config->get('lunar_mode'))) {
+            $val = $this->config->get('lunar_mode');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_api_mode', $val);
+            $this->config->set('payment_lunar_api_mode', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_test_key'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_test_key');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_public_key_test', $val);
-            $this->config->set(self::CONFIG_CODE . '_public_key_test', $val);
+        if (!is_null($this->config->get('lunar_test_key'))) {
+            $val = $this->config->get('lunar_test_key');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_public_key_test', $val);
+            $this->config->set('payment_lunar_public_key_test', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_test_app_key'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_test_app_key');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_app_key_test', $val);
-            $this->config->set(self::CONFIG_CODE . '_app_key_test', $val);
+        if (!is_null($this->config->get('lunar_test_app_key'))) {
+            $val = $this->config->get('lunar_test_app_key');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_app_key_test', $val);
+            $this->config->set('payment_lunar_app_key_test', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_live_key'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_live_key');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_public_key_live', $val);
-            $this->config->set(self::CONFIG_CODE . '_public_key_live', $val);
+        if (!is_null($this->config->get('lunar_live_key'))) {
+            $val = $this->config->get('lunar_live_key');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_public_key_live', $val);
+            $this->config->set('payment_lunar_public_key_live', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_live_app_key'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_live_app_key');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_app_key_live', $val);
-            $this->config->set(self::CONFIG_CODE . '_app_key_live', $val);
+        if (!is_null($this->config->get('lunar_live_app_key'))) {
+            $val = $this->config->get('lunar_live_app_key');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_app_key_live', $val);
+            $this->config->set('payment_lunar_app_key_live', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_capture'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_capture');
+        if (!is_null($this->config->get('lunar_capture'))) {
+            $val = $this->config->get('lunar_capture');
             if ($val == '1') {
                 $val = 'instant';
             } else {
                 $val = 'delayed';
             }
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_capture_mode', $val);
-            $this->config->set(self::CONFIG_CODE . '_capture_mode', $val);
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_capture_mode', $val);
+            $this->config->set('payment_lunar_capture_mode', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_total'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_total');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_minimum_total', $val);
-            $this->config->set(self::CONFIG_CODE . '_minimum_total', $val);
+        if (!is_null($this->config->get('lunar_total'))) {
+            $val = $this->config->get('lunar_total');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_minimum_total', $val);
+            $this->config->set('payment_lunar_minimum_total', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_geo_zone_id'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_geo_zone_id');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_geo_zone', $val);
-            $this->config->set(self::CONFIG_CODE . '_geo_zone', $val);
+        if (!is_null($this->config->get('lunar_geo_zone_id'))) {
+            $val = $this->config->get('lunar_geo_zone_id');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_geo_zone', $val);
+            $this->config->set('payment_lunar_geo_zone', $val);
         }
-        if (!is_null($this->config->get(self::VENDOR_NAME . '_sort_order'))) {
-            $val = $this->config->get(self::VENDOR_NAME . '_sort_order');
-            $this->model_setting_setting->editSettingValue(self::CONFIG_CODE, self::CONFIG_CODE . '_sort_order', $val);
-            $this->config->set(self::CONFIG_CODE . '_sort_order', $val);
+        if (!is_null($this->config->get('lunar_sort_order'))) {
+            $val = $this->config->get('lunar_sort_order');
+            $this->model_setting_setting->editSettingValue('payment_lunar', 'payment_lunar_sort_order', $val);
+            $this->config->set('payment_lunar_sort_order', $val);
         }
 
-        $query = $this->db->query("SELECT p.order_id, p.trans_id, p.amount, p.captured, o.currency_code, o.date_added FROM `" . DB_PREFIX . self::VENDOR_NAME . "_admin` AS p LEFT JOIN `" . DB_PREFIX . "order` AS o ON p.order_id = o.order_id");
+        $query = $this->db->query("SELECT p.order_id, p.trans_id, p.amount, p.captured, o.currency_code, o.date_added FROM `" . DB_PREFIX . "lunar_admin` AS p LEFT JOIN `" . DB_PREFIX . "order` AS o ON p.order_id = o.order_id");
         if ($query->num_rows > 0) {
             foreach ($query->rows as $row) {
                 if ($row['currency_code']!='') {
@@ -153,7 +152,7 @@ class ModelExtensionPaymentLunar extends Model
                         $transaction_amount = 0;
                         $total_amount = 0;
                     }
-                    $this->db->query("INSERT INTO `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`
+                    $this->db->query("INSERT INTO `" . self::LUNAR_DB_TABLE . "`
                                       SET order_id = '" . $row['order_id'] . "',
                                           transaction_id = '" . $row['trans_id'] . "',
                                           transaction_type = '" . $transaction_type . "',
@@ -168,7 +167,7 @@ class ModelExtensionPaymentLunar extends Model
             }
         }
 
-        $this->db->query("RENAME TABLE `" . DB_PREFIX . self::VENDOR_NAME . "_admin` TO `" . DB_PREFIX . self::VENDOR_NAME . "_transaction_archive`");
+        $this->db->query("RENAME TABLE `" . DB_PREFIX . "lunar_admin` TO `" . DB_PREFIX . "lunar_transaction_archive`");
 
         $vqmodfile = str_replace('catalog/', '', DIR_CATALOG) . 'vqmod/xml/vqmod_lunar.xml';
         if (is_file($vqmodfile)) {
@@ -198,7 +197,7 @@ class ModelExtensionPaymentLunar extends Model
      */
     public function getTotalTransactions($data = array())
     {
-        $sql = "SELECT COUNT(order_id) AS total FROM `" . DB_PREFIX . self::VENDOR_NAME . "_transaction` WHERE history = '0'";
+        $sql = "SELECT COUNT(order_id) AS total FROM `" . self::LUNAR_DB_TABLE . "` WHERE history = '0'";
 
         if (!empty($data['filter_order_id'])) {
             $sql .= " AND order_id = '" . (int)$data['filter_order_id'] . "'";
@@ -228,7 +227,7 @@ class ModelExtensionPaymentLunar extends Model
      */
     public function getTransactions($data = array())
     {
-        $sql = "SELECT * FROM `" . DB_PREFIX . self::VENDOR_NAME . "_transaction` WHERE history = '0'";
+        $sql = "SELECT * FROM `" . self::LUNAR_DB_TABLE . "` WHERE history = '0'";
 
         if (!empty($data['filter_order_id'])) {
             $sql .= " AND order_id = '" . (int)$data['filter_order_id'] . "'";
@@ -290,9 +289,9 @@ class ModelExtensionPaymentLunar extends Model
     public function getLastTransaction($ref)
     {
         $query = $this->db->query("SELECT *
-                                    FROM `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`
+                                    FROM `" . self::LUNAR_DB_TABLE . "`
                                     WHERE transaction_id = '" . $ref . "'
-                                    ORDER BY " . self::VENDOR_NAME . "_transaction_id
+                                    ORDER BY lunar_transaction_id
                                     DESC
                                     LIMIT 1"
                                 );
@@ -304,12 +303,12 @@ class ModelExtensionPaymentLunar extends Model
      */
     public function addTransaction($data)
     {
-        $this->db->query("UPDATE `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`
+        $this->db->query("UPDATE `" . self::LUNAR_DB_TABLE . "`
                             SET history = 1
                             WHERE history = '0'
                             AND transaction_id = '" . $data['transaction_id'] . "'"
                         );
-        $this->db->query("INSERT INTO `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`
+        $this->db->query("INSERT INTO `" . self::LUNAR_DB_TABLE . "`
                             SET order_id = '" . $data['order_id'] . "',
                             transaction_id = '" . $data['transaction_id'] . "',
                             transaction_type = '" . $data['transaction_type'] . "',
@@ -335,7 +334,7 @@ class ModelExtensionPaymentLunar extends Model
                                 WHERE order_id = '" . $data['order_id'] . "'"
                             );
 
-            $comment = ucfirst(self::VENDOR_NAME) . ' transaction: ref:' . $data['transaction_id'];
+            $comment = 'Lunar transaction: ref:' . $data['transaction_id'];
             $comment .= "\r\n" . 'Type: ' . $data['transaction_type'] . ', Amount: ' . $data['transaction_amount'] . ' ' . strtoupper($data['transaction_currency']);
 
             /** Update order history. */

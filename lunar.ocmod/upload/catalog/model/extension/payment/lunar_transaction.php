@@ -2,12 +2,11 @@
 
 class ModelExtensionPaymentLunarTransaction extends Model
 {
-    const VENDOR_NAME = 'lunar';
-    const CONFIG_CODE = 'payment_lunar';
+    const LUNAR_DB_TABLE = DB_PREFIX . 'lunar_transaction';
 
     public function getTransactions($data = array())
     {
-        $sql = "SELECT * FROM `" . DB_PREFIX . self::VENDOR_NAME . "transaction` WHERE history = '0'";
+        $sql = "SELECT * FROM `" . self::LUNAR_DB_TABLE . "` WHERE history = '0'";
 
         if (!empty($data['filter_order_id'])) {
             $sql .= " AND order_id = '" . (int)$data['filter_order_id'] . "'";
@@ -70,9 +69,9 @@ class ModelExtensionPaymentLunarTransaction extends Model
     public function getLastModuleTransaction($orderId)
     {
         $moduleTransaction = $this->db->query("SELECT *
-                                    FROM `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`
+                                    FROM `" . self::LUNAR_DB_TABLE . "`
                                     WHERE order_id = '" . $orderId . "'
-                                    ORDER BY " . self::VENDOR_NAME . "_transaction_id
+                                    ORDER BY lunar_transaction_id
                                     DESC
                                     LIMIT 1"
                                 );
@@ -85,13 +84,13 @@ class ModelExtensionPaymentLunarTransaction extends Model
      */
     public function addTransaction($data)
     {
-        $this->db->query("UPDATE `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`
+        $this->db->query("UPDATE `" . self::LUNAR_DB_TABLE . "`
                             SET history = 1
                             WHERE history = '0'
                             AND transaction_id = '" . $data['transaction_id'] . "'"
                         );
 
-        $this->db->query("INSERT INTO `" . DB_PREFIX . self::VENDOR_NAME . "_transaction`
+        $this->db->query("INSERT INTO `" . self::LUNAR_DB_TABLE . "`
                             SET order_id = '" . $data['order_id'] . "',
                                 transaction_id = '" . $data['transaction_id'] . "',
                                 transaction_type = '" . $data['transaction_type'] . "',
@@ -118,7 +117,7 @@ class ModelExtensionPaymentLunarTransaction extends Model
                                 WHERE order_id = '" . $data['order_id'] . "'"
                             );
 
-            $comment = ucfirst(self::VENDOR_NAME) . ' transaction: ref:' . $data['transaction_id'];
+            $comment = 'Lunar transaction: ref:' . $data['transaction_id'];
             $comment .= "\r\n" . 'Type: ' . $data['transaction_type'] . ', Amount: ' . $data['transaction_amount'] . ' (' . strtoupper($data['transaction_currency'] . ')');
 
             /** Update the last order history because it was inserted just a moment before. */
@@ -143,7 +142,7 @@ class ModelExtensionPaymentLunarTransaction extends Model
         $this->load->model('setting/setting');
         $settingModel = $this->model_setting_setting;
 
-        return $settingModel->getSetting(self::CONFIG_CODE, $storeId);
+        return $settingModel->getSetting('payment_lunar', $storeId);
     }
 
 }

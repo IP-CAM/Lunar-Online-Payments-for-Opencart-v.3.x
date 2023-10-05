@@ -1,7 +1,5 @@
 <?php
 
-if (!defined('VENDOR_NAME_FIRST_UPPER')) define('VENDOR_NAME_FIRST_UPPER', 'Lunar');
-
 $_['text_title'] = 'Credit Card';
 
 // Success
@@ -18,7 +16,7 @@ $_['error_transaction_error_returned'] = 'Transaction error';
 $_['error_empty_transaction_result']   = 'Invalid transaction';
 $_['error_transaction']                = 'Error: Invalid Transaction data!';
 $_['error_amount_format']              = 'Error: Invalid Amount!';
-$_['error_setup']                      = 'Error: ' . VENDOR_NAME_FIRST_UPPER . ' setup is not finished. Please review ' . VENDOR_NAME_FIRST_UPPER . ' settings!';
+$_['error_setup']                      = 'Error: Lunar setup is not finished. Please review Lunar settings!';
 $_['error_transaction_currency']       = 'Error: Invalid transaction currency!';
 $_['error_order_captured']             = 'Warning: Order already captured!';
 $_['error_refund_before_capture']      = 'Warning: You need to Capture Order prior to Refund.';
