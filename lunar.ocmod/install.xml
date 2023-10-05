@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <code>00001</code>
+    <name>Lunar Payments Modification</name>
+    <version>1.0.0</version>
+    <author>Lunar</author>
+    <link>http://lunar.app</link>
+
+    <file path="admin/controller/common/column_left.php">
+        <operation>
+            <search><![CDATA[if ($this->user->hasPermission('access', 'sale/recurring')) {]]></search>
+            <add position="before"><![CDATA[
+            // Lunar - OCMOD >>
+            if ($this->user->hasPermission('access', 'extension/payment/lunar')) {
+                if( version_compare(VERSION, '3.0.0.0', '>=') ) {
+                    $sale[] = array(
+                        'name'       => 'Lunar Payments',
+                        'href'     => $this->url->link('extension/payment/lunar/payments', 'user_token=' . $this->session->data['user_token'], true),
+                        'children' => array()
+                    );
+                }else{
+                    $sale[] = array(
+                        'name'       => 'Lunar Payments',
+                        'href'     => $this->url->link('extension/payment/lunar/payments', 'token=' . $this->session->data['token'], true),
+                        'children' => array()
+                    );
+                }
+            }
+            // << Lunar - OCMOD
+            ]]></add>
+        </operation>
+    </file>
+
+</modification>
