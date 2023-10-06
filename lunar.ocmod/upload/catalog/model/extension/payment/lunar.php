@@ -5,17 +5,6 @@ class ModelExtensionPaymentLunar extends Model
 
     public function getMethod($address, $total)
     {
-        /** Extract database table data {vendor}_admin. */
-        $query = $this->db->query("SELECT table_name
-                                   FROM information_schema.tables
-                                   WHERE table_schema = '" . DB_DATABASE . "'
-                                   AND table_name = '" . DB_PREFIX . "lunar_admin'"
-                               );
-        /** Check if table was extracted. */
-        if ($query->num_rows > 0) {
-            return array();
-        }
-
         $status         = false;
         $status_enabled = $this->config->get('payment_lunar_status');
 

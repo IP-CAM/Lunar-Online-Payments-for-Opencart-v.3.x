@@ -46,10 +46,9 @@ class ControllerExtensionPaymentLunar extends Controller
         $data['address'] .= $order_info['payment_country'] . ' - ' . $order_info['payment_postcode'];
 
         $data['ip']            = $order_info['ip'];
-        $formattedAmount                = $this->getFormattedAmounts($order_info['total'], $order_info['currency_code']);
-        $data['amount']        = $formattedAmount['in_minor'];
+
+        $data['amount']        = $order_info['total'];
         $data['currency_code'] = $order_info['currency_code'];
-        $data['exponent'] = $this->getExponentValueFromCurrencyCode($order_info['currency_code']);
 
         $products       = $this->cart->getProducts();
         $products_array = array();
@@ -116,7 +115,6 @@ class ControllerExtensionPaymentLunar extends Controller
         $this->load->model('checkout/order');
         $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
         $order_info['currency_code'] = strtoupper($order_info['currency_code']);
-        $formattedAmount = $this->getFormattedAmounts($order_info['total'], $order_info['currency_code']);
 
         $trans_data = Lunar\Transaction::fetch($ref);
 
@@ -146,28 +144,28 @@ class ControllerExtensionPaymentLunar extends Controller
         }
 
         if (isset($trans_data['transaction'])) {
-            if (isset($trans_data['transaction']['successful']) && (strtoUpper($trans_data['transaction']['currency']) == $order_info['currency_code']) && ($trans_data['transaction']['amount'] == $formattedAmount['in_minor'])) {
+            if (isset($trans_data['transaction']['successful']) && (strtoUpper($trans_data['transaction']['currency']) == $order_info['currency_code']) && ($trans_data['transaction']['amount'] == $order_info['total'])) {
                 $order_captured = false;
 
                 if ($this->config->get('payment_lunar_capture_mode') == 'instant') {
                     $data         = array(
-                        'amount'   => $formattedAmount['in_minor'],
+                        'amount'   => $order_info['total'],
                         'currency' => $order_info['currency_code']
                     );
                     $capture_data = Lunar\Transaction::capture($ref, $data);
                     if (! isset($capture_data['transaction'])) {
                         if ($log) {
-                            $this->logger->write('Unable to capture amount of ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . '). Order #' . $order_info['order_id'] . ' history updated.');
+                            $this->logger->write('Unable to capture amount of ' . $order_info['total'] . ' (' . $order_info['currency_code'] . '). Order #' . $order_info['order_id'] . ' history updated.');
                         }
                     } else {
                         if ($log) {
-                            $this->logger->write('Transaction finished. Captured amount: ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . '). Order #' . $order_info['order_id'] . ' history updated.');
+                            $this->logger->write('Transaction finished. Captured amount: ' . $order_info['total'] . ' (' . $order_info['currency_code'] . '). Order #' . $order_info['order_id'] . ' history updated.');
                         }
                         $order_captured = true;
                     }
                 } else {
                     if ($log) {
-                        $this->logger->write('Transaction authorized. Pending amount: ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . '). Order #' . $order_info['order_id'] . ' history updated.');
+                        $this->logger->write('Transaction authorized. Pending amount: ' . $order_info['total'] . ' (' . $order_info['currency_code'] . '). Order #' . $order_info['order_id'] . ' history updated.');
                     }
                 }
 
@@ -175,14 +173,14 @@ class ControllerExtensionPaymentLunar extends Controller
                     $type                = 'Authorize';
                     $transaction_amount  = 0;
                     $total_amount        = 0;
-                    $comment             = 'Lunar transaction: ref:' . $ref . "\r\n" . 'Authorized amount: ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . ')';
+                    $comment             = 'Lunar transaction: ref:' . $ref . "\r\n" . 'Authorized amount: ' . $order_info['total'] . ' (' . $order_info['currency_code'] . ')';
                     $new_order_status_id = $this->config->get('payment_lunar_authorize_status_id');
                     $json['success']     = $this->language->get('success_message_authorized');
                 } else {
                     $type                = 'Capture';
-                    $transaction_amount  = $formattedAmount['converted'];
-                    $total_amount        = $formattedAmount['converted'];
-                    $comment             = 'Lunar transaction: ref:' . $ref . "\r\n" . 'Captured amount: ' . $formattedAmount['formatted'] . ' (' . $order_info['currency_code'] . ')';
+                    $transaction_amount  = $order_info['total'];
+                    $total_amount        = $order_info['total'];
+                    $comment             = 'Lunar transaction: ref:' . $ref . "\r\n" . 'Captured amount: ' . $order_info['total'] . ' (' . $order_info['currency_code'] . ')';
                     $new_order_status_id = $this->config->get('payment_lunar_capture_status_id');
                     $json['success']     = $this->language->get('success_message_captured');
                 }
@@ -193,7 +191,7 @@ class ControllerExtensionPaymentLunar extends Controller
                                         transaction_id = '" . $ref . "',
                                         transaction_type = '" . $type . "',
                                         transaction_currency = '" . $order_info['currency_code'] . "',
-                                        order_amount = '" . $formattedAmount['converted'] . "',
+                                        order_amount = '" . $order_info['total'] . "',
                                         transaction_amount = '" . $transaction_amount . "',
                                         total_amount = '" . $total_amount . "',
                                         history = '0',
@@ -214,54 +212,5 @@ class ControllerExtensionPaymentLunar extends Controller
         $json['error'] = $this->language->get('error_invalid_transaction_data');
 
         return $json;
-    }
-
-    private function getFormattedAmounts($order_amount, $currency_code)
-    {
-        $exponent = $this->getExponentValueFromCurrencyCode($currency_code);
-
-        $multiplier = pow(10, $exponent);
-        $formattedAmount     = array();
-
-        $formattedAmount['order_amount']      = $order_amount;
-        $formattedAmount['store_converted']   = $this->currency->format($formattedAmount['order_amount'], $currency_code, false, false);
-        $formattedAmount['store_formatted']   = $this->currency->format($formattedAmount['order_amount'], $currency_code, false, true);
-        $formattedAmount['in_minor']           = ceil(round($formattedAmount['store_converted'] * $multiplier));
-        $formattedAmount['converted'] = $this->currency->format($formattedAmount['in_minor'] / $multiplier, $currency_code, 1, false);
-        $formattedAmount['formatted'] = $this->currency->format($formattedAmount['in_minor'] / $multiplier, $currency_code, 1, true);
-
-        return $formattedAmount;
-    }
-
-    private function getExponentValueFromCurrencyCode($currency_code)
-    {
-        $exponent_zero  = array(
-            'BIF',
-            'BYR',
-            'DJF',
-            'GNF',
-            'JPY',
-            'KMF',
-            'KRW',
-            'PYG',
-            'RWF',
-            'VND',
-            'VUV',
-            'XAF',
-            'XOF',
-            'XPF'
-        );
-
-        $exponent_three = array('BHD', 'IQD', 'JOD', 'KWD', 'OMR', 'TND');
-
-        $exponent       = 2;
-
-        if (in_array($currency_code, $exponent_zero)) {
-            $exponent = 0;
-        } elseif (in_array($currency_code, $exponent_three)) {
-            $exponent = 3;
-        }
-
-        return $exponent;
     }
 }
