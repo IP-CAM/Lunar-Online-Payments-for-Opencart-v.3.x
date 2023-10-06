@@ -20,8 +20,12 @@ class ControllerExtensionPaymentLunar extends Controller
 
         $this->model_extension_payment_lunar->install();
 
-        if (is_null($this->config->get('payment_lunar_method_title'))) {
-            $this->session->data['error_warning'] = $this->language->get('text_setting_review_required');
+        if (
+            is_null($this->config->get('payment_lunar_method_title'))
+            || is_null($this->config->get('payment_lunar_app_key_live'))
+            || is_null($this->config->get('payment_lunar_public_key_live'))
+        ) {
+            $data['warning'] = $this->language->get('text_setting_review_required');
         }
 
         $this->maybeUpdateStoreSettings();
@@ -37,11 +41,10 @@ class ControllerExtensionPaymentLunar extends Controller
 
         $data['button_save']                     = $this->language->get('button_save');
         $data['button_cancel']                   = $this->language->get('button_cancel');
-        $data['button_payments']                 = $this->language->get('button_payments');
 
+        $data['text_enabled']                    = $this->language->get('text_enabled');
         $data['text_disabled']                   = $this->language->get('text_disabled');
         $data['text_test']                       = $this->language->get('text_test');
-        $data['text_enabled']                    = $this->language->get('text_enabled');
         $data['text_live']                       = $this->language->get('text_live');
         $data['text_all_zones']                  = $this->language->get('text_all_zones');
         $data['text_description']                = $this->language->get('text_description');
@@ -50,11 +53,9 @@ class ControllerExtensionPaymentLunar extends Controller
         $data['text_advanced_settings']          = $this->language->get('text_advanced_settings');
         $data['text_capture_instant']            = $this->language->get('text_capture_instant');
         $data['text_capture_delayed']            = $this->language->get('text_capture_delayed');
-        $data['text_display_mode_popup']         = $this->language->get('text_display_mode_popup');
-        $data['text_display_mode_inline']        = $this->language->get('text_display_mode_inline');
 
         $data['entry_payment_method_title']      = $this->language->get('entry_payment_method_title');
-        $data['entry_checkout_popup_title']      = $this->language->get('entry_checkout_popup_title');
+        $data['entry_shop_title']                = $this->language->get('entry_shop_title');
         $data['entry_checkout_cc_logo']          = $this->language->get('entry_checkout_cc_logo');
         $data['entry_checkout_display_mode']     = $this->language->get('entry_checkout_display_mode');
         $data['entry_public_key_test']           = $this->language->get('entry_public_key_test');
@@ -66,7 +67,7 @@ class ControllerExtensionPaymentLunar extends Controller
         $data['entry_authorize_status_id']       = $this->language->get('entry_authorize_status_id');
         $data['entry_capture_status_id']         = $this->language->get('entry_capture_status_id');
         $data['entry_refund_status_id']          = $this->language->get('entry_refund_status_id');
-        $data['entry_void_status_id']            = $this->language->get('entry_void_status_id');
+        $data['entry_cancel_status_id']          = $this->language->get('entry_cancel_status_id');
         $data['entry_payment_enabled']           = $this->language->get('entry_payment_enabled');
         $data['entry_logging']                   = $this->language->get('entry_logging');
         $data['entry_minimum_total']             = $this->language->get('entry_minimum_total');
@@ -75,10 +76,9 @@ class ControllerExtensionPaymentLunar extends Controller
         $data['entry_store']                     = $this->language->get('entry_store');
 
         $data['help_payment_method_title']       = $this->language->get('help_payment_method_title');
-        $data['help_checkout_popup_title']       = $this->language->get('help_checkout_popup_title');
-        $data['help_checkout_popup_description'] = $this->language->get('help_checkout_popup_description');
+        $data['help_shop_title']                 = $this->language->get('help_shop_title');
+        $data['help_checkout_description']       = $this->language->get('help_checkout_description');
         $data['help_checkout_cc_logo']           = $this->language->get('help_checkout_cc_logo');
-        $data['help_checkout_display_mode']      = $this->language->get('help_checkout_display_mode');
         $data['help_public_key_test']            = $this->language->get('help_public_key_test');
         $data['help_app_key_test']               = $this->language->get('help_app_key_test');
         $data['help_public_key_live']            = $this->language->get('help_public_key_live');
@@ -88,13 +88,12 @@ class ControllerExtensionPaymentLunar extends Controller
         $data['help_authorize_status_id']        = $this->language->get('help_authorize_status_id');
         $data['help_capture_status_id']          = $this->language->get('help_capture_status_id');
         $data['help_refund_status_id']           = $this->language->get('help_refund_status_id');
-        $data['help_void_status_id']             = $this->language->get('help_void_status_id');
+        $data['help_cancel_status_id']           = $this->language->get('help_cancel_status_id');
         $data['help_payment_enabled']            = $this->language->get('help_payment_enabled');
         $data['help_logging']                    = $this->language->get('help_logging');
         $data['help_minimum_total']              = $this->language->get('help_minimum_total');
         $data['help_geo_zone']                   = $this->language->get('help_geo_zone');
         $data['help_sort_order']                 = $this->language->get('help_sort_order');
-        $data['help_store']                      = $this->language->get('help_store');
         $data['help_select_store']               = $this->language->get('help_select_store');
 
 
@@ -152,16 +151,16 @@ class ControllerExtensionPaymentLunar extends Controller
             $data['payment_lunar_method_title'] = $this->language->get('default_payment_method_title');
         }
 
-        if (isset($this->request->post['payment_lunar_checkout_title'])) {
-            $data['payment_lunar_checkout_title'] = $this->request->post['payment_lunar_checkout_title'];
+        if (isset($this->request->post['payment_lunar_shop_title'])) {
+            $data['payment_lunar_shop_title'] = $this->request->post['payment_lunar_shop_title'];
         } else {
-            $data['payment_lunar_checkout_title'] = $this->config->get('payment_lunar_checkout_title');
+            $data['payment_lunar_shop_title'] = $this->config->get('payment_lunar_shop_title');
         }
 
-        if (isset($this->request->post['payment_lunar_checkout_description'])) {
-            $data['payment_lunar_checkout_description'] = $this->request->post['payment_lunar_checkout_description'];
+        if (isset($this->request->post['payment_lunar_description'])) {
+            $data['payment_lunar_description'] = $this->request->post['payment_lunar_description'];
         } else {
-            $data['payment_lunar_checkout_description'] = $this->config->get('payment_lunar_checkout_description');
+            $data['payment_lunar_description'] = $this->config->get('payment_lunar_description');
         }
 
         $data['ccLogos'] = $this->model_extension_payment_lunar->getCcLogos();
@@ -171,12 +170,6 @@ class ControllerExtensionPaymentLunar extends Controller
             $data['payment_lunar_checkout_cc_logo'] = $this->config->get('payment_lunar_checkout_cc_logo');
         } else {
             $data['payment_lunar_checkout_cc_logo'] = $this->language->get('default_payment_lunar_checkout_cc_logo');
-        }
-
-        if (isset($this->request->post['payment_lunar_checkout_display_mode'])) {
-            $data['payment_lunar_checkout_display_mode'] = $this->request->post['payment_lunar_checkout_display_mode'];
-        } else {
-            $data['payment_lunar_checkout_display_mode'] = $this->config->get('payment_lunar_checkout_display_mode');
         }
 
         if (isset($this->request->post['payment_lunar_app_key_test'])) {
@@ -241,12 +234,12 @@ class ControllerExtensionPaymentLunar extends Controller
             $data['payment_lunar_refund_status_id'] = 11;
         }
 
-        if (isset($this->request->post['payment_lunar_void_status_id'])) {
-            $data['payment_lunar_void_status_id'] = $this->request->post['payment_lunar_void_status_id'];
-        } elseif (! is_null($this->config->get('payment_lunar_void_status_id'))) {
-            $data['payment_lunar_void_status_id'] = $this->config->get('payment_lunar_void_status_id');
+        if (isset($this->request->post['payment_lunar_cancel_status_id'])) {
+            $data['payment_lunar_cancel_status_id'] = $this->request->post['payment_lunar_cancel_status_id'];
+        } elseif (! is_null($this->config->get('payment_lunar_cancel_status_id'))) {
+            $data['payment_lunar_cancel_status_id'] = $this->config->get('payment_lunar_cancel_status_id');
         } else {
-            $data['payment_lunar_void_status_id'] = 16;
+            $data['payment_lunar_cancel_status_id'] = 16;
         }
 
         if (isset($this->request->post['payment_lunar_status'])) {
@@ -309,8 +302,6 @@ class ControllerExtensionPaymentLunar extends Controller
 
         $data['action']          = $this->url->link(self::EXTENSION_PATH, $this->oc_token . '=' . $this->session->data[ $this->oc_token ], true);
         $data['cancel']          = $this->url->link('marketplace/extension', $this->oc_token . '=' . $this->session->data[ $this->oc_token ] . '&type=payment', true);
-        $data['payment_lunar_payments'] = $this->url->link(self::EXTENSION_PATH . '/payments', $this->oc_token . '=' . $this->session->data[ $this->oc_token ], true);
-
 
         $this->load->model('localisation/order_status');
         $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
@@ -443,7 +434,7 @@ class ControllerExtensionPaymentLunar extends Controller
      */
     private function maybeUpdateStoreSettings()
     {
-        if (( $this->request->server['REQUEST_METHOD'] != 'POST' ) && !$this->validate()) {
+        if (( $this->request->server['REQUEST_METHOD'] != 'POST' ) || !$this->validate()) {
             return;
         }
 

@@ -34,14 +34,14 @@
     </div>
 
     <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_popup_title"><span
+        <label class="col-sm-2 control-label" for="payment_lunar_shop_title"><span
                     data-toggle="tooltip"
-                    title="{{ help_checkout_popup_title }}">{{ entry_checkout_popup_title }}</span></label>
+                    title="{{ help_shop_title }}">{{ entry_shop_title }}</span></label>
         <div class="col-sm-10">
-            <input type="text" name="payment_lunar_checkout_title"
-                    value="{{ payment_lunar_checkout_title }}"
-                    placeholder="{{ entry_checkout_popup_title }}"
-                    id="payment_lunar_popup_title" class="form-control"/>
+            <input type="text" name="payment_lunar_shop_title"
+                    value="{{ payment_lunar_shop_title }}"
+                    placeholder="{{ entry_shop_title }}"
+                    id="payment_lunar_shop_title" class="form-control"/>
         </div>
     </div>
 
@@ -248,14 +248,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="col-sm-2 control-label" for="payment_lunar_void_status_id"><span
+                    <label class="col-sm-2 control-label" for="payment_lunar_cancel_status_id"><span
                                 data-toggle="tooltip"
-                                title="{{ help_void_status_id }}">{{ entry_void_status_id }}</span></label>
+                                title="{{ help_cancel_status_id }}">{{ entry_cancel_status_id }}</span></label>
                     <div class="col-sm-10">
-                        <select name="payment_lunar_void_status_id" id="payment_lunar_void_status_id"
+                        <select name="payment_lunar_cancel_status_id" id="payment_lunar_cancel_status_id"
                                 class="form-control">
                             {% for order_status in order_statuses %}
-                                {% if order_status.order_status_id == payment_lunar_void_status_id %}
+                                {% if order_status.order_status_id == payment_lunar_cancel_status_id %}
                                     <option value="{{ order_status.order_status_id }}"
                                             selected="selected">{{ order_status.name }}</option>
                                 {% else %}

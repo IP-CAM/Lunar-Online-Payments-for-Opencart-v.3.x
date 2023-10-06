@@ -3,11 +3,11 @@
 $_['text_title'] = 'Credit Card';
 
 // Success
-$_['success_message_authorized'] = 'Order authorization successful!';
-$_['success_message_captured']   = 'Order successfully paid!';
-$_['success_transaction_capture'] = 'Successful Capture transaction. Captured %s';
-$_['success_transaction_refund']  = 'Successful Refund transaction. Refunded %s';
-$_['success_transaction_void']    = 'Successful Void transaction. Voided %s';
+$_['success_message_authorized']  = 'Order authorization successful!';
+$_['success_message_captured']    = 'Order successfully paid!';
+$_['success_transaction_capture'] = 'Successful Captured transaction. Captured %s';
+$_['success_transaction_refund']  = 'Successful Refunded transaction. Refunded %s';
+$_['success_transaction_cancel']  = 'Successful Canceled transaction. Cancelled %s';
 
 // Error
 $_['error_no_transaction_found']       = 'No transaction reference found';
@@ -20,7 +20,7 @@ $_['error_setup']                      = 'Error: Lunar setup is not finished. Pl
 $_['error_transaction_currency']       = 'Error: Invalid transaction currency!';
 $_['error_order_captured']             = 'Warning: Order already captured!';
 $_['error_refund_before_capture']      = 'Warning: You need to Capture Order prior to Refund.';
-$_['error_void_after_capture']         = 'Warning: You can\'t Void transaction now. It\'s already Captured, try to Refund.';
+$_['error_cancel_after_capture']       = 'Warning: You can\'t Cancel transaction now. It\'s already Captured, try to Refund.';
 $_['error_message']                    = 'Transaction Error!';
 
 // Warning

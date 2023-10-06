@@ -8,8 +8,6 @@
                         class="btn btn-primary"><i class="fa fa-save"></i></button>
                 <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i
                             class="fa fa-reply"></i></a>
-                <a href="{{ payment_lunar_payments }}" data-toggle="tooltip" title="{{ button_payments }}"
-                        class="btn btn-success"><i class="fa fa-calculator"></i></a>
             </div>
             <h1>{{ heading_title }}</h1>
             <ul class="breadcrumb">
@@ -22,6 +20,11 @@
     <div class="container-fluid">
         {% if error_warning %}
             <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i>&nbsp;{{ error_warning }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
+        {% if warning %}
+            <div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i>&nbsp;{{ warning }}
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             </div>
         {% endif %}
@@ -128,7 +131,7 @@
                 });
 
                 $("#payment_lunar_method_title").val(data?.[`payment_lunar_method_title`] ?? '');
-                $("#payment_lunar_popup_title").val(data?.[`payment_lunar_checkout_title`] ?? '');
+                $("#payment_lunar_shop_title").val(data?.[`payment_lunar_shop_title`] ?? '');
 
                 $(`input[name='payment_lunar_checkout_cc_logo[]']`).each(function () {
                     if (`payment_lunar_checkout_cc_logo` in data) {
@@ -160,7 +163,7 @@
                 $("#payment_lunar_authorize_status_id").val(data?.[`payment_lunar_authorize_status_id`] ?? 1);
                 $("#payment_lunar_capture_status_id").val(data?.[`payment_lunar_capture_status_id`] ?? 5);
                 $("#payment_lunar_refund_status_id").val(data?.[`payment_lunar_refund_status_id`] ?? 11);
-                $("#payment_lunar_void_status_id").val(data?.[`payment_lunar_void_status_id`] ?? 16);
+                $("#payment_lunar_cancel_status_id").val(data?.[`payment_lunar_cancel_status_id`] ?? 16);
 
                 $("#payment_lunar_logging").val(data?.[`payment_lunar_logging`] ?? 0);
                 $("#payment_lunar_minimum_total").val(data?.[`payment_lunar_minimum_total`] ?? 0);

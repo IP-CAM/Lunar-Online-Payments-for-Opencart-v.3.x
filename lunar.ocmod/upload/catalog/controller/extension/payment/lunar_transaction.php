@@ -69,8 +69,8 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
             } elseif ($order['order_status_id'] === $this->config->get('payment_lunar_refund_status_id')) {
                 $this->orderData->type = 'Refund';
 
-            } elseif ($order['order_status_id'] === $this->config->get('payment_lunar_void_status_id')) {
-                $this->orderData->type = 'Void';
+            } elseif ($order['order_status_id'] === $this->config->get('payment_lunar_cancel_status_id')) {
+                $this->orderData->type = 'Cancel';
 
             } else {
                 /** Return that no other status is available for transaction. */
@@ -218,19 +218,19 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
 
                 break;
 
-            case "Void":
+            case "Cancel":
                 if ($trans_data['transaction']['capturedAmount'] > 0) {
                     if ($log) {
-                        $this->logger->write('Error: Order already Captured and cannot be Void. Transaction aborted.');
+                        $this->logger->write('Error: Order already Captured and cannot be Cancelled. Transaction aborted.');
                     }
-                    $json['error'] = $this->language->get('error_void_after_capture');
+                    $json['error'] = $this->language->get('error_cancel_after_capture');
                     ;
 
                     return $json;
                 }
                 if ($trans_data['transaction']['pendingAmount'] < $formattedAmount['in_minor']) {
                     if ($log) {
-                        $this->logger->write('Warning: Void amount is larger than Transaction captured amount. Captured amount will be voided.');
+                        $this->logger->write('Warning: Cancel amount is larger than Transaction captured amount. Captured amount will be cancelled.');
                     }
                     $formattedAmount = $this->getFormattedAmount($trans_data['transaction']['pendingAmount'], $history['transaction_currency'], true);
                 }
@@ -239,7 +239,7 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
                     'amount' => $formattedAmount['in_minor'],
                 );
 
-                /** VOID the order amount. */
+                /** CANCEL the order amount. */
                 $response = Transaction::void($ref, $data);
                 break;
         }

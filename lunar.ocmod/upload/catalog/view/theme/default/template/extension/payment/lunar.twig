@@ -1,86 +1,66 @@
-{% if active_mode=='test' %}
+
+{% if active_mode == 'test' %}
     <div class="alert alert-info attention"><i class="fa fa-exclamation-circle"></i>&nbsp;{{ warning_test_mode }}</div>
 {% endif %}
+
 <div data-amount="{{ amount }}" style="float: left" id="lunar-payment-widget"></div>
 <div class="buttons">
   <div class="pull-right">
     <input type="button" value="{{ button_confirm }}" id="button-confirm" class="btn btn-primary" />
   </div>
 </div>
-<script type="text/javascript" src="https://sdk.paylike.io/a.js"></script>
-<script type="text/javascript"><!--
+
+<script type="text/javascript">
+
     $('#button-confirm').on('click', function() {
       $('.payment-alert').remove();
 
-      var sdkClient = Paylike({key: '{{ lunar_public_key }}'});
+      $.ajax({
+        url: 'index.php?route=extension/payment/lunar/process_payment',
+        type: 'post',
+        data: {
 
-        /* Integration with Journal 3 Theme - One Page Checkout
-         * Disable preloader if is defined
-         */
-      try {
-        $('.journal-loading-overlay').remove();
-        triggerLoadingOff();
-      } catch (error) {}
-
-      sdkClient.pay({
-        test: ('live' === '{{ active_mode }}') ? (false) : (true),
-        title: '{{ popup_title }}',
-        description: '{{ popup_description }}',
-        amount: {
-          currency: '{{ currency_code|upper }}',
-          exponent: {{ exponent }},
-          value: {{ amount }}
         },
-        locale: '{{ lc }}',
-        custom: {
-          orderId: '{{ order_id }}',
-          products: {{ products }},
-          customer: {
-            name: '{{ name }}',
-            email: '{{ email }}',
-            phoneNo: '{{ telephone }}',
-            address: '{{ address }}',
-            IP: '{{ ip }}'
-          },
-          platform: {
-            name: 'opencart',
-            version: '{{ opencart_version }}'
-          },
-          lunarPluginVersion: '{{ plugin_version }}'
-        }
-      }, function(err, res) {
-        if (err)
-          return console.log(err);
+        dataType: 'json',
+        cache: false,
+        
+        beforeSend: function() {
+          $('#button-confirm').button('loading');
+        },
 
-        console.log(res);
-        console.log('++++++++++++++++++++++++++++');
+        complete: function() {
+          $('#button-confirm').button('reset');
+        },
 
-        $.ajax({
-          url: 'index.php?route=extension/payment/lunar/process_payment',
-          type: 'post',
-          data: {
-            'trans_ref': res.transaction.id
-          },
-          dataType: 'json',
-          cache: false,
-          beforeSend: function() {
-            $('#button-confirm').button('loading');
-          },
-          complete: function() {
-            $('#button-confirm').button('reset');
-          },
-          success: function(json) {
-            if (json.hasOwnProperty('error')) {
-              var html = '<div class="alert alert-danger payment-alert"><i class="fa fa-exclamation-circle"></i> Warning: ' + json.error + '<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
-              $('#button-confirm').closest('.buttons').before(html);
-            }
-            if (json.hasOwnProperty('redirect')) {
-              var html = '<div class="alert alert-success payment-alert"><i class="fa fa-exclamation-circle"></i> ' + json.success + '<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
-              $('#button-confirm').closest('.buttons').before(html);
-              location.href = json.redirect;
-            }
+        success: function(json) {
+          if (json.hasOwnProperty('error')) {
+            var html = `<div class="alert alert-danger payment-alert">
+                          <i class="fa fa-exclamation-circle"></i> 
+                            Warning: ${json.error}
+                          <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>`;
+            $('#button-confirm').closest('.buttons').before(html);
           }
-        });
+          if (json.hasOwnProperty('redirect')) {
+            var html = `<div class="alert alert-success payment-alert">
+                          <i class="fa fa-exclamation-circle"></i>
+                            ${json.success}
+                          <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>`;
+            $('#button-confirm').closest('.buttons').before(html);
+            location.href = json.redirect;
+          }
+        }
       });
+
     });
-//--></script>
+
+    function getHtmlMessage(message, type = 'success') {
+      return `<div class="alert alert-success payment-alert">
+              <i class="fa fa-exclamation-circle"></i>
+                ${json.success}
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>`;
+    }
+
+</script>

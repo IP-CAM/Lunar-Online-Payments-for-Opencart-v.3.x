@@ -22,15 +22,14 @@ class ControllerExtensionPaymentLunar extends Controller
             $data['lunar_public_key'] = $this->config->get('payment_lunar_public_key_test');
         }
 
-        if ($this->config->get('payment_lunar_checkout_title') != '') {
-            $data['popup_title'] = $this->config->get('payment_lunar_checkout_title');
+        if ($this->config->get('payment_lunar_shop_title') != '') {
+            $data['payment_lunar_shop_title'] = $this->config->get('payment_lunar_shop_title');
         } else {
-            $data['popup_title'] = $this->config->get('config_name');
+            $data['payment_lunar_shop_title'] = $this->config->get('config_name');
         }
 
         $data['button_confirm'] = $this->language->get('button_confirm');
         $data['lc']             = $this->session->data['language'];
-        $data['mode']           = $this->config->get('payment_lunar_checkout_display_mode');
 
         $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
         $order_info['currency_code'] = strtoupper($order_info['currency_code']);
@@ -64,10 +63,10 @@ class ControllerExtensionPaymentLunar extends Controller
             $p ++;
         }
         $data['products'] = json_encode($products_array);
-        if ($this->config->get('payment_lunar_checkout_description') != '') {
-            $data['popup_description'] = $this->config->get('payment_lunar_checkout_description');
+        if ($this->config->get('payment_lunar_description') != '') {
+            $data['payment_lunar_description'] = $this->config->get('payment_lunar_description');
         } else {
-            $data['popup_description'] = implode(", & ", $products_label);
+            $data['payment_lunar_description'] = implode(", & ", $products_label);
         }
 
         return $this->load->view(self::EXTENSION_PATH, $data);
@@ -75,16 +74,11 @@ class ControllerExtensionPaymentLunar extends Controller
 
     public function process_payment()
     {
-        $json = array();
-        $this->load->language(self::EXTENSION_PATH);
+        $json = [];
 
-        if (is_null($this->request->post['trans_ref']) || $this->request->post['trans_ref'] == '') {
-            $json['error'] = $this->language->get('error_no_transaction_found');
-        }
-
-        if (! $json) {
-            $json = $this->validate_payment();
-        }
+        // if (! $json) {
+        //     $json = $this->validate_payment();
+        // }
 
         $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($json));
@@ -94,9 +88,9 @@ class ControllerExtensionPaymentLunar extends Controller
     {
         $this->load->language(self::EXTENSION_PATH);
         $this->logger = new Log('lunar.log');
-        $log          = $this->config->get('payment_lunar_logging') ? true : false;
+        $log = $this->config->get('payment_lunar_logging') ? true : false;
 
-        $json = array();
+        $json = [];
         $ref  = $this->request->post['trans_ref'];
 
         if ($log) {
