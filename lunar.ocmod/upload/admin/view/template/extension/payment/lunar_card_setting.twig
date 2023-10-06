@@ -1,4 +1,4 @@
-<div class="tab-pane active" id="tab-card-general_settings">
+<div class="tab-pane active" id="tab-card-settings">
 
     <div class="form-group">
         <label class="col-sm-2 control-label" for="payment_lunar_status"><span
@@ -30,29 +30,6 @@
             {% if error_payment_method_title %}
                 <div class="text-danger">{{ error_payment_method_title }}</div>
             {% endif %}
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="col-sm-2 control-label"><span data-toggle="tooltip"
-                    title="{{ help_checkout_cc_logo }}">{{ entry_checkout_cc_logo }}</span></label>
-        <div class="col-sm-10">
-            <div class="well well-sm" style="overflow: auto;">
-                {% for ccLogo in ccLogos %}
-                    <div class="checkbox">
-                        <label>
-                            {% if ccLogo.logo in payment_lunar_checkout_cc_logo %}
-                                <input type="checkbox" name="payment_lunar_checkout_cc_logo[]"
-                                        value="{{ ccLogo.logo }}" checked="checked"/>
-                                {{ ccLogo.name }}
-                            {% else %}
-                                <input type="checkbox" name="payment_lunar_checkout_cc_logo[]"
-                                        value="{{ ccLogo.logo }}"/>
-                                {{ ccLogo.name }}
-                            {% endif %}
-                        </label>
-                    </div>
-                {% endfor %}
-            </div>
         </div>
     </div>
 
@@ -166,146 +143,188 @@
             </select>
         </div>
     </div>
-</div>
-
-
-
-
-
-
-<div class="tab-pane" id="tab-card-advanced_settings">
 
     <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_authorize_status_id"><span
-                    data-toggle="tooltip"
-                    title="{{ help_authorize_status_id }}">{{ entry_authorize_status_id }}</span></label>
+        <label class="col-sm-2 control-label"><span data-toggle="tooltip"
+                    title="{{ help_checkout_cc_logo }}">{{ entry_checkout_cc_logo }}</span></label>
         <div class="col-sm-10">
-            <select name="payment_lunar_authorize_status_id" id="payment_lunar_authorize_status_id"
-                    class="form-control">
-                {% for order_status in order_statuses %}
-                    {% if order_status.order_status_id == payment_lunar_authorize_status_id %}
-                        <option value="{{ order_status.order_status_id }}"
-                                selected="selected">{{ order_status.name }}</option>
-                    {% else %}
-                        <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
-                    {% endif %}
+            <div class="well well-sm" style="overflow: auto;">
+                {% for ccLogo in ccLogos %}
+                    <div class="checkbox">
+                        <label>
+                            {% if ccLogo.logo in payment_lunar_checkout_cc_logo %}
+                                <input type="checkbox" name="payment_lunar_checkout_cc_logo[]"
+                                        value="{{ ccLogo.logo }}" checked="checked"/>
+                                {{ ccLogo.name }}
+                            {% else %}
+                                <input type="checkbox" name="payment_lunar_checkout_cc_logo[]"
+                                        value="{{ ccLogo.logo }}"/>
+                                {{ ccLogo.name }}
+                            {% endif %}
+                        </label>
+                    </div>
                 {% endfor %}
-            </select>
+            </div>
         </div>
     </div>
 
-    <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_capture_status_id"><span
-                    data-toggle="tooltip"
-                    title="{{ help_capture_status_id }}">{{ entry_capture_status_id }}</span></label>
-        <div class="col-sm-10">
-            <select name="payment_lunar_capture_status_id" id="payment_lunar_capture_status_id"
-                    class="form-control">
-                {% for order_status in order_statuses %}
-                    {% if order_status.order_status_id == payment_lunar_capture_status_id %}
-                        <option value="{{ order_status.order_status_id }}"
-                                selected="selected">{{ order_status.name }}</option>
-                    {% else %}
-                        <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-        </div>
-    </div>
 
-    <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_refund_status_id"><span
-                    data-toggle="tooltip"
-                    title="{{ help_refund_status_id }}">{{ entry_refund_status_id }}</span></label>
-        <div class="col-sm-10">
-            <select name="payment_lunar_refund_status_id" id="payment_lunar_refund_status_id"
-                    class="form-control">
-                {% for order_status in order_statuses %}
-                    {% if order_status.order_status_id == payment_lunar_refund_status_id %}
-                        <option value="{{ order_status.order_status_id }}"
-                                selected="selected">{{ order_status.name }}</option>
-                    {% else %}
-                        <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-        </div>
-    </div>
+    {# 
+        ADVANCED SETTINGS
+    #}
 
-    <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_void_status_id"><span
-                    data-toggle="tooltip"
-                    title="{{ help_void_status_id }}">{{ entry_void_status_id }}</span></label>
-        <div class="col-sm-10">
-            <select name="payment_lunar_void_status_id" id="payment_lunar_void_status_id"
-                    class="form-control">
-                {% for order_status in order_statuses %}
-                    {% if order_status.order_status_id == payment_lunar_void_status_id %}
-                        <option value="{{ order_status.order_status_id }}"
-                                selected="selected">{{ order_status.name }}</option>
-                    {% else %}
-                        <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-        </div>
-    </div>
 
-    <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_logging"><span data-toggle="tooltip"
-                    title="{{ help_logging }}">{{ entry_logging }}</span></label>
-        <div class="col-sm-10">
-            <select name="payment_lunar_logging" id="payment_lunar_logging" class="form-control">
-                {% if payment_lunar_logging %}
-                    <option value="1" selected="selected">{{ text_enabled }}</option>
-                    <option value="0">{{ text_disabled }}</option>
-                {% else %}
-                    <option value="1">{{ text_enabled }}</option>
-                    <option value="0" selected="selected">{{ text_disabled }}</option>
-                {% endif %}
-            </select>
-        </div>
-    </div>
+    <div class="accordion" id="card-accordion">
+        <div class="card">
+            <div 
+                role="button" 
+                class="card-header mb-0 well pointer"
+                style="min-height: 10px; padding: 10px; margin-bottom: 0;"  
+                data-toggle="collapse" 
+                data-target="#card-advanced-settings" 
+                aria-expanded="true" 
+                aria-controls="card-advanced-settings"
+            >
+                <strong class="text-uppercase"> {{ text_advanced_settings }} </strong>
+                <span style="font-weight: bold; font-size: 2rem; margin-left: 10px; margin-top: -0.5rem" > &#8659; </span>
+            </div>
+            <div class="collapse" id="card-advanced-settings">
 
-    <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_minimum_total"><span
-                    data-toggle="tooltip"
-                    title="{{ help_minimum_total }}">{{ entry_minimum_total }}</span></label>
-        <div class="col-sm-10">
-            <input type="text" name="payment_lunar_minimum_total"
-                    value="{{ payment_lunar_minimum_total }}"
-                    placeholder="{{ entry_minimum_total }}" id="payment_lunar_minimum_total"
-                    class="form-control"/>
-        </div>
-    </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="payment_lunar_authorize_status_id"><span
+                                data-toggle="tooltip"
+                                title="{{ help_authorize_status_id }}">{{ entry_authorize_status_id }}</span></label>
+                    <div class="col-sm-10">
+                        <select name="payment_lunar_authorize_status_id" id="payment_lunar_authorize_status_id"
+                                class="form-control">
+                            {% for order_status in order_statuses %}
+                                {% if order_status.order_status_id == payment_lunar_authorize_status_id %}
+                                    <option value="{{ order_status.order_status_id }}"
+                                            selected="selected">{{ order_status.name }}</option>
+                                {% else %}
+                                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
 
-    <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_geo_zone"><span data-toggle="tooltip"
-                    title="{{ help_geo_zone }}">{{ entry_geo_zone }}</span></label>
-        <div class="col-sm-10">
-            <select name="payment_lunar_geo_zone" id="payment_lunar_geo_zone" class="form-control">
-                <option value="0">{{ text_all_zones }}</option>
-                {% for geo_zone in geo_zones %}
-                    {% if geo_zone.geo_zone_id == payment_lunar_geo_zone %}
-                        <option value="{{ geo_zone.geo_zone_id }}"
-                                selected="selected">{{ geo_zone.name }}</option>
-                    {% else %}
-                        <option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-        </div>
-    </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="payment_lunar_capture_status_id"><span
+                                data-toggle="tooltip"
+                                title="{{ help_capture_status_id }}">{{ entry_capture_status_id }}</span></label>
+                    <div class="col-sm-10">
+                        <select name="payment_lunar_capture_status_id" id="payment_lunar_capture_status_id"
+                                class="form-control">
+                            {% for order_status in order_statuses %}
+                                {% if order_status.order_status_id == payment_lunar_capture_status_id %}
+                                    <option value="{{ order_status.order_status_id }}"
+                                            selected="selected">{{ order_status.name }}</option>
+                                {% else %}
+                                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
 
-    <div class="form-group">
-        <label class="col-sm-2 control-label" for="payment_lunar_sort_order"><span
-                    data-toggle="tooltip"
-                    title="{{ help_sort_order }}">{{ entry_sort_order }}</span></label>
-        <div class="col-sm-10">
-            <input type="text" name="payment_lunar_sort_order"
-                    value="{{ payment_lunar_sort_order }}"
-                    placeholder="{{ entry_sort_order }}" id="payment_lunar_sort_order"
-                    class="form-control"/>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="payment_lunar_refund_status_id"><span
+                                data-toggle="tooltip"
+                                title="{{ help_refund_status_id }}">{{ entry_refund_status_id }}</span></label>
+                    <div class="col-sm-10">
+                        <select name="payment_lunar_refund_status_id" id="payment_lunar_refund_status_id"
+                                class="form-control">
+                            {% for order_status in order_statuses %}
+                                {% if order_status.order_status_id == payment_lunar_refund_status_id %}
+                                    <option value="{{ order_status.order_status_id }}"
+                                            selected="selected">{{ order_status.name }}</option>
+                                {% else %}
+                                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="payment_lunar_void_status_id"><span
+                                data-toggle="tooltip"
+                                title="{{ help_void_status_id }}">{{ entry_void_status_id }}</span></label>
+                    <div class="col-sm-10">
+                        <select name="payment_lunar_void_status_id" id="payment_lunar_void_status_id"
+                                class="form-control">
+                            {% for order_status in order_statuses %}
+                                {% if order_status.order_status_id == payment_lunar_void_status_id %}
+                                    <option value="{{ order_status.order_status_id }}"
+                                            selected="selected">{{ order_status.name }}</option>
+                                {% else %}
+                                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="payment_lunar_logging"><span data-toggle="tooltip"
+                                title="{{ help_logging }}">{{ entry_logging }}</span></label>
+                    <div class="col-sm-10">
+                        <select name="payment_lunar_logging" id="payment_lunar_logging" class="form-control">
+                            {% if payment_lunar_logging %}
+                                <option value="1" selected="selected">{{ text_enabled }}</option>
+                                <option value="0">{{ text_disabled }}</option>
+                            {% else %}
+                                <option value="1">{{ text_enabled }}</option>
+                                <option value="0" selected="selected">{{ text_disabled }}</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="payment_lunar_minimum_total"><span
+                                data-toggle="tooltip"
+                                title="{{ help_minimum_total }}">{{ entry_minimum_total }}</span></label>
+                    <div class="col-sm-10">
+                        <input type="text" name="payment_lunar_minimum_total"
+                                value="{{ payment_lunar_minimum_total }}"
+                                placeholder="{{ entry_minimum_total }}" id="payment_lunar_minimum_total"
+                                class="form-control"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="payment_lunar_geo_zone"><span data-toggle="tooltip"
+                                title="{{ help_geo_zone }}">{{ entry_geo_zone }}</span></label>
+                    <div class="col-sm-10">
+                        <select name="payment_lunar_geo_zone" id="payment_lunar_geo_zone" class="form-control">
+                            <option value="0">{{ text_all_zones }}</option>
+                            {% for geo_zone in geo_zones %}
+                                {% if geo_zone.geo_zone_id == payment_lunar_geo_zone %}
+                                    <option value="{{ geo_zone.geo_zone_id }}"
+                                            selected="selected">{{ geo_zone.name }}</option>
+                                {% else %}
+                                    <option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="payment_lunar_sort_order"><span
+                                data-toggle="tooltip"
+                                title="{{ help_sort_order }}">{{ entry_sort_order }}</span></label>
+                    <div class="col-sm-10">
+                        <input type="text" name="payment_lunar_sort_order"
+                                value="{{ payment_lunar_sort_order }}"
+                                placeholder="{{ entry_sort_order }}" id="payment_lunar_sort_order"
+                                class="form-control"/>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
