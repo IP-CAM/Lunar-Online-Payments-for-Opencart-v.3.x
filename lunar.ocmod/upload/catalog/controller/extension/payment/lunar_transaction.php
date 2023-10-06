@@ -133,7 +133,7 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
         }
 
 
-        $pluginSettingsData = $this->model_extension_payment_lunar_transaction->getSettingsData($orderStoreId);
+        $pluginSettingsData = $this->getSettingsData($orderStoreId);
         $app_key = $pluginSettingsData['payment_lunar_api_mode'] == 'live' ?
                     $pluginSettingsData['payment_lunar_app_key_live'] :
                     $pluginSettingsData['payment_lunar_app_key_test'];
@@ -301,6 +301,15 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
 
             return $json;
         }
+    }
+
+    /**
+     * Get plugin store specific settings.
+     */
+    private function getSettingsData($storeId)
+    {
+        $this->load->model('setting/setting');
+        return $this->model_setting_setting->getSetting('payment_lunar', $storeId);
     }
 
     /**

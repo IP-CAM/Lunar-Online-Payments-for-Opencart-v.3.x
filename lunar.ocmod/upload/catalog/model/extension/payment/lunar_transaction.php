@@ -132,17 +132,4 @@ class ModelExtensionPaymentLunarTransaction extends Model
                             );
         }
     }
-
-    /**
-     * Get module settings for specific store.
-     */
-    public function getSettingsData($storeId)
-    {
-        /** Load setting model. */
-        $this->load->model('setting/setting');
-        $settingModel = $this->model_setting_setting;
-
-        return $settingModel->getSetting('payment_lunar', $storeId);
-    }
-
 }
