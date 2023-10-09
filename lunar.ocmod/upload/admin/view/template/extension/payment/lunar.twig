@@ -80,13 +80,13 @@
                         <div class="tab-pane active" id="tab-general-settings">
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_status"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_status"><span
                                             data-toggle="tooltip"
                                             title="{{ help_payment_enabled }}">{{ entry_payment_enabled }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_status" id="payment_lunar_status"
+                                    <select name="{{ methodCode }}_status" id="{{ methodCode }}_status"
                                             class="form-control">
-                                        {% if payment_lunar_status %}
+                                        {% if status %}
                                             <option value="1" selected="selected">{{ text_enabled }}</option>
                                             <option value="0">{{ text_disabled }}</option>
                                         {% else %}
@@ -98,14 +98,14 @@
                             </div>
 
                             <div class="form-group required">
-                                <label class="col-sm-2 control-label" for="payment_lunar_method_title"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_method_title"><span
                                             data-toggle="tooltip"
                                             title="{{ help_payment_method_title }}">{{ entry_payment_method_title }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="payment_lunar_method_title"
-                                            value="{{ payment_lunar_method_title }}"
+                                    <input type="text" name="{{ methodCode }}_method_title"
+                                            value="{{ method_title }}"
                                             placeholder="{{ entry_payment_method_title }}"
-                                            id="payment_lunar_method_title" class="form-control"/>
+                                            id="{{ methodCode }}_method_title" class="form-control"/>
                                     {% if error_payment_method_title %}
                                         <div class="text-danger">{{ error_payment_method_title }}</div>
                                     {% endif %}
@@ -113,14 +113,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_shop_title"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_shop_title"><span
                                             data-toggle="tooltip"
                                             title="{{ help_shop_title }}">{{ entry_shop_title }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="payment_lunar_shop_title"
-                                            value="{{ payment_lunar_shop_title }}"
+                                    <input type="text" name="{{ methodCode }}_shop_title"
+                                            value="{{ shop_title }}"
                                             placeholder="{{ entry_shop_title }}"
-                                            id="payment_lunar_shop_title" class="form-control"/>
+                                            id="{{ methodCode }}_shop_title" class="form-control"/>
                                 </div>
                             </div>
 
@@ -128,11 +128,11 @@
                                 Show the following fields only in debug mode
                             #}
                             <div class="form-group" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="payment_lunar_api_mode"><span data-toggle="tooltip"
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_api_mode"><span data-toggle="tooltip"
                                             title="{{ help_api_mode }}">{{ entry_api_mode }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_api_mode" id="payment_lunar_api_mode" class="form-control">
-                                        {% if payment_lunar_api_mode == 'test' %}
+                                    <select name="{{ methodCode }}_api_mode" id="{{ methodCode }}_api_mode" class="form-control">
+                                        {% if api_mode == 'test' %}
                                             <option value="test" selected="selected">{{ text_test }}</option>
                                             <option value="live">{{ text_live }}</option>
                                         {% else %}
@@ -144,13 +144,13 @@
                             </div>
 
                             <div class="form-group required js-test-key" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="payment_lunar_app_key_test"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_app_key_test"><span
                                             data-toggle="tooltip"
                                             title="{{ help_app_key_test }}">{{ entry_app_key_test }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="payment_lunar_app_key_test"
-                                            value="{{ payment_lunar_app_key_test }}"
-                                            placeholder="{{ entry_app_key_test }}" id="payment_lunar_app_key_test"
+                                    <input type="text" name="{{ methodCode }}_app_key_test"
+                                            value="{{ app_key_test }}"
+                                            placeholder="{{ entry_app_key_test }}" id="{{ methodCode }}_app_key_test"
                                             class="form-control"/>
                                     {% if error_app_key_test %}
                                         <div class="text-danger">{{ error_app_key_test }}</div>
@@ -159,13 +159,13 @@
                             </div>
 
                             <div class="form-group required js-test-key" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="payment_lunar_public_key_test"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_public_key_test"><span
                                             data-toggle="tooltip"
                                             title="{{ help_public_key_test }}">{{ entry_public_key_test }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="payment_lunar_public_key_test"
-                                            value="{{ payment_lunar_public_key_test }}"
-                                            placeholder="{{ entry_public_key_test }}" id="payment_lunar_public_key_test"
+                                    <input type="text" name="{{ methodCode }}_public_key_test"
+                                            value="{{ public_key_test }}"
+                                            placeholder="{{ entry_public_key_test }}" id="{{ methodCode }}_public_key_test"
                                             class="form-control"/>
                                     {% if error_public_key_test %}
                                         <div class="text-danger">{{ error_public_key_test }}</div>
@@ -174,13 +174,13 @@
                             </div>
 
                             <div class="form-group required js-live-key">
-                                <label class="col-sm-2 control-label" for="payment_lunar_app_key_live"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_app_key_live"><span
                                             data-toggle="tooltip"
                                             title="{{ help_app_key_live }}">{{ entry_app_key_live }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="payment_lunar_app_key_live"
-                                            value="{{ payment_lunar_app_key_live }}"
-                                            placeholder="{{ entry_app_key_live }}" id="payment_lunar_app_key_live"
+                                    <input type="text" name="{{ methodCode }}_app_key_live"
+                                            value="{{ app_key_live }}"
+                                            placeholder="{{ entry_app_key_live }}" id="{{ methodCode }}_app_key_live"
                                             class="form-control"/>
                                     {% if error_app_key_live %}
                                         <div class="text-danger">{{ error_app_key_live }}</div>
@@ -189,13 +189,13 @@
                             </div>
 
                             <div class="form-group required js-live-key">
-                                <label class="col-sm-2 control-label" for="payment_lunar_public_key_live"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_public_key_live"><span
                                             data-toggle="tooltip"
                                             title="{{ help_public_key_live }}">{{ entry_public_key_live }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="payment_lunar_public_key_live"
-                                            value="{{ payment_lunar_public_key_live }}"
-                                            placeholder="{{ entry_public_key_live }}" id="payment_lunar_public_key_live"
+                                    <input type="text" name="{{ methodCode }}_public_key_live"
+                                            value="{{ public_key_live }}"
+                                            placeholder="{{ entry_public_key_live }}" id="{{ methodCode }}_public_key_live"
                                             class="form-control"/>
                                     {% if error_public_key_live %}
                                         <div class="text-danger">{{ error_public_key_live }}</div>
@@ -204,13 +204,13 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_capture_mode"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_capture_mode"><span
                                             data-toggle="tooltip"
                                             title="{{ help_capture_mode }}">{{ entry_capture_mode }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_capture_mode" id="payment_lunar_capture_mode"
+                                    <select name="{{ methodCode }}_capture_mode" id="{{ methodCode }}_capture_mode"
                                             class="form-control">
-                                        {% if payment_lunar_capture_mode == 'instant' %}
+                                        {% if capture_mode == 'instant' %}
                                             <option value="instant"
                                                     selected="selected">{{ text_capture_instant }}</option>
                                             <option value="delayed">{{ text_capture_delayed }}</option>
@@ -231,12 +231,12 @@
                                         {% for ccLogo in ccLogos %}
                                             <div class="checkbox">
                                                 <label>
-                                                    {% if ccLogo.logo in payment_lunar_checkout_cc_logo %}
-                                                        <input type="checkbox" name="payment_lunar_checkout_cc_logo[]"
+                                                    {% if ccLogo.logo in checkout_cc_logo %}
+                                                        <input type="checkbox" name="{{ methodCode }}_checkout_cc_logo[]"
                                                                 value="{{ ccLogo.logo }}" checked="checked"/>
                                                         {{ ccLogo.name }}
                                                     {% else %}
-                                                        <input type="checkbox" name="payment_lunar_checkout_cc_logo[]"
+                                                        <input type="checkbox" name="{{ methodCode }}_checkout_cc_logo[]"
                                                                 value="{{ ccLogo.logo }}"/>
                                                         {{ ccLogo.name }}
                                                     {% endif %}
@@ -257,14 +257,14 @@
                         <div class="tab-pane" id="tab-advanced-settings">
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_authorize_status_id"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_authorize_status_id"><span
                                             data-toggle="tooltip"
                                             title="{{ help_authorize_status_id }}">{{ entry_authorize_status_id }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_authorize_status_id" id="payment_lunar_authorize_status_id"
+                                    <select name="{{ methodCode }}_authorize_status_id" id="{{ methodCode }}_authorize_status_id"
                                             class="form-control">
                                         {% for order_status in order_statuses %}
-                                            {% if order_status.order_status_id == payment_lunar_authorize_status_id %}
+                                            {% if order_status.order_status_id == authorize_status_id %}
                                                 <option value="{{ order_status.order_status_id }}"
                                                         selected="selected">{{ order_status.name }}</option>
                                             {% else %}
@@ -276,14 +276,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_capture_status_id"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_capture_status_id"><span
                                             data-toggle="tooltip"
                                             title="{{ help_capture_status_id }}">{{ entry_capture_status_id }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_capture_status_id" id="payment_lunar_capture_status_id"
+                                    <select name="{{ methodCode }}_capture_status_id" id="{{ methodCode }}_capture_status_id"
                                             class="form-control">
                                         {% for order_status in order_statuses %}
-                                            {% if order_status.order_status_id == payment_lunar_capture_status_id %}
+                                            {% if order_status.order_status_id == capture_status_id %}
                                                 <option value="{{ order_status.order_status_id }}"
                                                         selected="selected">{{ order_status.name }}</option>
                                             {% else %}
@@ -295,14 +295,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_refund_status_id"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_refund_status_id"><span
                                             data-toggle="tooltip"
                                             title="{{ help_refund_status_id }}">{{ entry_refund_status_id }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_refund_status_id" id="payment_lunar_refund_status_id"
+                                    <select name="{{ methodCode }}_refund_status_id" id="{{ methodCode }}_refund_status_id"
                                             class="form-control">
                                         {% for order_status in order_statuses %}
-                                            {% if order_status.order_status_id == payment_lunar_refund_status_id %}
+                                            {% if order_status.order_status_id == refund_status_id %}
                                                 <option value="{{ order_status.order_status_id }}"
                                                         selected="selected">{{ order_status.name }}</option>
                                             {% else %}
@@ -314,14 +314,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_cancel_status_id"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_cancel_status_id"><span
                                             data-toggle="tooltip"
                                             title="{{ help_cancel_status_id }}">{{ entry_cancel_status_id }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_cancel_status_id" id="payment_lunar_cancel_status_id"
+                                    <select name="{{ methodCode }}_cancel_status_id" id="{{ methodCode }}_cancel_status_id"
                                             class="form-control">
                                         {% for order_status in order_statuses %}
-                                            {% if order_status.order_status_id == payment_lunar_cancel_status_id %}
+                                            {% if order_status.order_status_id == cancel_status_id %}
                                                 <option value="{{ order_status.order_status_id }}"
                                                         selected="selected">{{ order_status.name }}</option>
                                             {% else %}
@@ -333,11 +333,11 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_logging"><span data-toggle="tooltip"
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_logging"><span data-toggle="tooltip"
                                             title="{{ help_logging }}">{{ entry_logging }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_logging" id="payment_lunar_logging" class="form-control">
-                                        {% if payment_lunar_logging %}
+                                    <select name="{{ methodCode }}_logging" id="{{ methodCode }}_logging" class="form-control">
+                                        {% if logging %}
                                             <option value="1" selected="selected">{{ text_enabled }}</option>
                                             <option value="0">{{ text_disabled }}</option>
                                         {% else %}
@@ -349,25 +349,25 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_minimum_total"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_minimum_total"><span
                                             data-toggle="tooltip"
                                             title="{{ help_minimum_total }}">{{ entry_minimum_total }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="payment_lunar_minimum_total"
-                                            value="{{ payment_lunar_minimum_total }}"
-                                            placeholder="{{ entry_minimum_total }}" id="payment_lunar_minimum_total"
+                                    <input type="text" name="{{ methodCode }}_minimum_total"
+                                            value="{{ minimum_total }}"
+                                            placeholder="{{ entry_minimum_total }}" id="{{ methodCode }}_minimum_total"
                                             class="form-control"/>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_geo_zone"><span data-toggle="tooltip"
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_geo_zone"><span data-toggle="tooltip"
                                             title="{{ help_geo_zone }}">{{ entry_geo_zone }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="payment_lunar_geo_zone" id="payment_lunar_geo_zone" class="form-control">
+                                    <select name="{{ methodCode }}_geo_zone" id="{{ methodCode }}_geo_zone" class="form-control">
                                         <option value="0">{{ text_all_zones }}</option>
                                         {% for geo_zone in geo_zones %}
-                                            {% if geo_zone.geo_zone_id == payment_lunar_geo_zone %}
+                                            {% if geo_zone.geo_zone_id == geo_zone %}
                                                 <option value="{{ geo_zone.geo_zone_id }}"
                                                         selected="selected">{{ geo_zone.name }}</option>
                                             {% else %}
@@ -379,13 +379,13 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="payment_lunar_sort_order"><span
+                                <label class="col-sm-2 control-label" for="{{ methodCode }}_sort_order"><span
                                             data-toggle="tooltip"
                                             title="{{ help_sort_order }}">{{ entry_sort_order }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="payment_lunar_sort_order"
-                                            value="{{ payment_lunar_sort_order }}"
-                                            placeholder="{{ entry_sort_order }}" id="payment_lunar_sort_order"
+                                    <input type="text" name="{{ methodCode }}_sort_order"
+                                            value="{{ sort_order }}"
+                                            placeholder="{{ entry_sort_order }}" id="{{ methodCode }}_sort_order"
                                             class="form-control"/>
                                 </div>
                             </div>
@@ -401,129 +401,6 @@
 </div>
 
 
-{# <script type="text/javascript">
-
-    $('#tabs a:first').tab('show');
-
-    /**
-     * On select a store, populate form data with selected store config data
-     */
-    $("#config_selected_store").on("change", function() {
-
-        /** Remove any previous errors. */
-        $(".select-store-dropdown-error").val();
-
-        /** Set store ID variable. */
-        var storeId = $(this).val();
-
-        /** Ajax call to get selected store config data. */
-        $.ajax({
-            method: "POST",
-            url: "index.php?route=extension/payment/lunar/get_store_settings&user_token=" + getURLVar("user_token"),
-            dataType: "json",
-            contentType: "application/x-www-form-urlencoded",
-            data: {
-                store_id: storeId
-            },
-            success: function (data, status, xhr) {
-
-                /** Add selected attribute to selected store option */
-                setSelectedAttributeOnSelectedOption(this.id, storeId)
-
-                /** Add status option to status input. If not exists, change to disabled. */
-                $("#payment_lunar_status option").each(function () {
-                    if (data?.[`payment_lunar_status`]) {
-                        if (data[`payment_lunar_status`] !== $(this).val()) {
-                            $(this).removeAttr("selected");
-                        } else {
-                            $(this).attr("selected", true);
-                        }
-                    } else {
-                        if (1 == $(this).val()) {
-                            $(this).removeAttr("selected");
-                        } else {
-                            $(this).attr("selected", true);
-                        }
-                    }
-                });
-
-                $("#payment_lunar_method_title").val(data?.[`payment_lunar_method_title`] ?? '');
-                $("#payment_lunar_shop_title").val(data?.[`payment_lunar_shop_title`] ?? '');
-
-                $(`input[name='payment_lunar_checkout_cc_logo[]']`).each(function () {
-                    if (`payment_lunar_checkout_cc_logo` in data) {
-                        if ( ! data[`payment_lunar_checkout_cc_logo`].includes($(this).val())) {
-                            $(this).prop("checked", false);
-                        } else {
-                            $(this).prop("checked", true);
-                        }
-                    } else {
-                        $(this).prop("checked", true);
-                    }
-                });
-
-                /** Set selected on api mode dropdown. Default = live. */
-                setSelectedAttributeOnSelectedOption("payment_lunar_api_mode", data?.[`payment_lunar_api_mode`] ?? "live");
-                toggleFields(data?.["payment_lunar_api_mode"] ?? "live")
-
-                /** Set selected on capture mode dropdown. Default = delayed. */
-                setSelectedAttributeOnSelectedOption("payment_lunar_capture_mode", data?.[`payment_lunar_capture_mode`] ?? "delayed");
-
-                $("#payment_lunar_app_key_test").val(data?.[`payment_lunar_app_key_test`] ?? '');
-                $("#payment_lunar_public_key_test").val(data?.[`payment_lunar_public_key_test`] ?? '');
-                $("#payment_lunar_app_key_live").val(data?.[`payment_lunar_app_key_live`] ?? '');
-                $("#payment_lunar_public_key_live").val(data?.[`payment_lunar_public_key_live`] ?? '');
-
-                /**
-                 * !!! HARDCODED ORDER STATUSES IDS !!!
-                 */
-                $("#payment_lunar_authorize_status_id").val(data?.[`payment_lunar_authorize_status_id`] ?? 1);
-                $("#payment_lunar_capture_status_id").val(data?.[`payment_lunar_capture_status_id`] ?? 5);
-                $("#payment_lunar_refund_status_id").val(data?.[`payment_lunar_refund_status_id`] ?? 11);
-                $("#payment_lunar_cancel_status_id").val(data?.[`payment_lunar_cancel_status_id`] ?? 16);
-
-                $("#payment_lunar_logging").val(data?.[`payment_lunar_logging`] ?? 0);
-                $("#payment_lunar_minimum_total").val(data?.[`payment_lunar_minimum_total`] ?? 0);
-                $("#payment_lunar_geo_zone").val(data?.[`payment_lunar_geo_zone`] ?? 0);
-                $("#payment_lunar_sort_order").val(data?.[`payment_lunar_sort_order`] ?? 0);
-
-            },
-            error: function (jqXhr, textStatus, errorMessage) {
-                /** Check if error is of type "parsererror". This shows up when token expire. */
-                if ('parsererror' == textStatus) {
-                    location.href = 'index.php?route=extension/payment/lunar';
-                } else {
-                    $(".select-store-dropdown-error").append("Error: " + errorMessage).addClass("text-danger");
-                    console.error(errorMessage)
-                }
-            }
-        });
-
-    });
-
-    /** Module status set "selected" on change. */
-    $("#payment_lunar_status").on("change", function() {
-        setSelectedAttributeOnSelectedOption(this.id, $(this).val());
-    });
-
-    /** Module api mode set "selected" on change. */
-    $("#payment_lunar_api_mode").on("change", function() {
-        setSelectedAttributeOnSelectedOption(this.id, $(this).val());
-    });
-
-    /**
-     * Set selected attribute on dropdown selected option
-     */
-    function setSelectedAttributeOnSelectedOption(selector, value) {
-        $("#" + selector + " option").each(function () {
-            if (value !== $(this).val()) {
-                $(this).removeAttr("selected");
-            } else {
-                $(this).attr("selected", true);
-            }
-        });
-    }
-
-</script> #}
+c
 
 {{ footer }}

@@ -22,7 +22,7 @@ abstract class AbstractLunarAdminController extends \Controller
     public function index()
     {
         $this->oc_token = 'user_token';
-        $this->load->language('extension/payment/lunar');
+        $this->load->language(static::EXTENSION_PATH);
         $this->load->model('tool/image');
         $this->load->model('extension/payment/lunar');
 
@@ -137,6 +137,7 @@ abstract class AbstractLunarAdminController extends \Controller
             $data['success'] = '';
         }
 
+        $data['methodCode'] = 'payment_lunar_' . $this->paymentMethodCode;
         $this->response->setOutput($this->load->view('extension/payment/lunar', $data));
     }
 
@@ -160,16 +161,16 @@ abstract class AbstractLunarAdminController extends \Controller
         $configKey = 'payment_lunar_' . $this->paymentMethodCode . '_' . $key;
 
         if (isset($this->request->post[$configKey])) {
-            $data[$configKey] = $this->request->post[$configKey];
+            $data[$key] = $this->request->post[$configKey];
         } else {
-            $data[$configKey] = $this->config->get($configKey);
+            $data[$key] = $this->config->get($configKey);
         }
         
         if ($default) {
             if (!is_null($this->config->get($configKey))) {
-                $data[$configKey] = $this->config->get($configKey);
+                $data[$key] = $this->config->get($configKey);
             } else {
-                $data[$configKey] = $default;
+                $data[$key] = $default;
             }
         }
     }
