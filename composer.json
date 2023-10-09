@@ -1,7 +1,8 @@
 {
   "name": "lunar/plugin-opencart-3",
-  "description": "Lunar Online Payments for Opencart 3.x and 2.3+",
+  "description": "Lunar Online Payments for Opencart 3.x",
   "license": "MIT",
+  "version": "2.0.0",
   "authors": [
     {
       "name": "Lunar",
