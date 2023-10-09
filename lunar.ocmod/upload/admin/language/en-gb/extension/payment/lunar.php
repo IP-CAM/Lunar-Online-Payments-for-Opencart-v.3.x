@@ -1,6 +1,6 @@
 <?php
 
-$_['heading_title'] = 'Lunar';
+// $_['heading_title'] = 'Lunar';
 $_['text_lunar']  = '<a target="_BLANK" href="https://lunar.app"><img height=40 src="view/image/payment/lunar.png" alt="Lunar logo" title="Lunar logo" /></a>';
 
 // Text
@@ -25,9 +25,6 @@ $_['default_payment_lunar_checkout_cc_logo'] = array(
     'visa.png',
     'visaelectron.png'
 );
-
-//Buttons
-$_['button_payments'] = 'Lunar Payments';
 
 // Entry
 $_['entry_payment_method_title']  = 'Payment method title';

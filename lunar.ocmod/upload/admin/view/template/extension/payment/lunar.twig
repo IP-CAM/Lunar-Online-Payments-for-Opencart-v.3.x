@@ -35,9 +35,11 @@
         {% endif %}
 
         <div class="panel panel-default">
+
             <div class="panel-heading">
                 <h3 class="panel-title" data-module-version="{{ plugin_version }}"><i class="fa fa-pencil"></i>&nbsp;{{ text_edit_settings }}</h3>
             </div>
+            
             <div class="panel-body">
 
                 <form action="{{ action }}" method="post" enctype="multipart/form-data" id="lunar-config-form"
@@ -68,15 +70,330 @@
                     {# Store select end #}
 
                     <ul class="nav nav-tabs" id="lunar-tabs">
-                        <li class="active"><a href="#tab-card-settings" data-toggle="tab">{{ text_general_settings }}</a></li>
-                        <li><a href="#tab-mobilepay-settings" data-toggle="tab">{{ "MOBILEPAY" }}</a></li>
+                        <li class="active"><a href="#tab-general-settings" data-toggle="tab">{{ text_general_settings }}</a></li>
+                        <li><a href="#tab-advanced-settings" data-toggle="tab">{{ text_advanced_settings }}</a></li>
                     </ul>
 
                     <div class="tab-content">
 
-                        {{ lunar_card_setting_fields }}
+
+                        <div class="tab-pane active" id="tab-general-settings">
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_status"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_payment_enabled }}">{{ entry_payment_enabled }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_status" id="payment_lunar_status"
+                                            class="form-control">
+                                        {% if payment_lunar_status %}
+                                            <option value="1" selected="selected">{{ text_enabled }}</option>
+                                            <option value="0">{{ text_disabled }}</option>
+                                        {% else %}
+                                            <option value="1">{{ text_enabled }}</option>
+                                            <option value="0" selected="selected">{{ text_disabled }}</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="payment_lunar_method_title"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_payment_method_title }}">{{ entry_payment_method_title }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payment_lunar_method_title"
+                                            value="{{ payment_lunar_method_title }}"
+                                            placeholder="{{ entry_payment_method_title }}"
+                                            id="payment_lunar_method_title" class="form-control"/>
+                                    {% if error_payment_method_title %}
+                                        <div class="text-danger">{{ error_payment_method_title }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_shop_title"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_shop_title }}">{{ entry_shop_title }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payment_lunar_shop_title"
+                                            value="{{ payment_lunar_shop_title }}"
+                                            placeholder="{{ entry_shop_title }}"
+                                            id="payment_lunar_shop_title" class="form-control"/>
+                                </div>
+                            </div>
+
+                            {#
+                                Show the following fields only in debug mode
+                            #}
+                            <div class="form-group" {% if not debugMode %}{{'hidden'}}{% endif %}>
+                                <label class="col-sm-2 control-label" for="payment_lunar_api_mode"><span data-toggle="tooltip"
+                                            title="{{ help_api_mode }}">{{ entry_api_mode }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_api_mode" id="payment_lunar_api_mode" class="form-control">
+                                        {% if payment_lunar_api_mode == 'test' %}
+                                            <option value="test" selected="selected">{{ text_test }}</option>
+                                            <option value="live">{{ text_live }}</option>
+                                        {% else %}
+                                            <option value="test">{{ text_test }}</option>
+                                            <option value="live" selected="selected">{{ text_live }}</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group required js-test-key" {% if not debugMode %}{{'hidden'}}{% endif %}>
+                                <label class="col-sm-2 control-label" for="payment_lunar_app_key_test"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_app_key_test }}">{{ entry_app_key_test }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payment_lunar_app_key_test"
+                                            value="{{ payment_lunar_app_key_test }}"
+                                            placeholder="{{ entry_app_key_test }}" id="payment_lunar_app_key_test"
+                                            class="form-control"/>
+                                    {% if error_app_key_test %}
+                                        <div class="text-danger">{{ error_app_key_test }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group required js-test-key" {% if not debugMode %}{{'hidden'}}{% endif %}>
+                                <label class="col-sm-2 control-label" for="payment_lunar_public_key_test"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_public_key_test }}">{{ entry_public_key_test }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payment_lunar_public_key_test"
+                                            value="{{ payment_lunar_public_key_test }}"
+                                            placeholder="{{ entry_public_key_test }}" id="payment_lunar_public_key_test"
+                                            class="form-control"/>
+                                    {% if error_public_key_test %}
+                                        <div class="text-danger">{{ error_public_key_test }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group required js-live-key">
+                                <label class="col-sm-2 control-label" for="payment_lunar_app_key_live"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_app_key_live }}">{{ entry_app_key_live }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payment_lunar_app_key_live"
+                                            value="{{ payment_lunar_app_key_live }}"
+                                            placeholder="{{ entry_app_key_live }}" id="payment_lunar_app_key_live"
+                                            class="form-control"/>
+                                    {% if error_app_key_live %}
+                                        <div class="text-danger">{{ error_app_key_live }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group required js-live-key">
+                                <label class="col-sm-2 control-label" for="payment_lunar_public_key_live"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_public_key_live }}">{{ entry_public_key_live }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payment_lunar_public_key_live"
+                                            value="{{ payment_lunar_public_key_live }}"
+                                            placeholder="{{ entry_public_key_live }}" id="payment_lunar_public_key_live"
+                                            class="form-control"/>
+                                    {% if error_public_key_live %}
+                                        <div class="text-danger">{{ error_public_key_live }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_capture_mode"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_capture_mode }}">{{ entry_capture_mode }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_capture_mode" id="payment_lunar_capture_mode"
+                                            class="form-control">
+                                        {% if payment_lunar_capture_mode == 'instant' %}
+                                            <option value="instant"
+                                                    selected="selected">{{ text_capture_instant }}</option>
+                                            <option value="delayed">{{ text_capture_delayed }}</option>
+                                        {% else %}
+                                            <option value="instant">{{ text_capture_instant }}</option>
+                                            <option value="delayed"
+                                                    selected="selected">{{ text_capture_delayed }}</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label"><span data-toggle="tooltip"
+                                            title="{{ help_checkout_cc_logo }}">{{ entry_checkout_cc_logo }}</span></label>
+                                <div class="col-sm-10">
+                                    <div class="well well-sm" style="overflow: auto;">
+                                        {% for ccLogo in ccLogos %}
+                                            <div class="checkbox">
+                                                <label>
+                                                    {% if ccLogo.logo in payment_lunar_checkout_cc_logo %}
+                                                        <input type="checkbox" name="payment_lunar_checkout_cc_logo[]"
+                                                                value="{{ ccLogo.logo }}" checked="checked"/>
+                                                        {{ ccLogo.name }}
+                                                    {% else %}
+                                                        <input type="checkbox" name="payment_lunar_checkout_cc_logo[]"
+                                                                value="{{ ccLogo.logo }}"/>
+                                                        {{ ccLogo.name }}
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                            {# 
+                                ADVANCED SETTINGS
+                            #}
+
+                        <div class="tab-pane" id="tab-advanced-settings">
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_authorize_status_id"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_authorize_status_id }}">{{ entry_authorize_status_id }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_authorize_status_id" id="payment_lunar_authorize_status_id"
+                                            class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            {% if order_status.order_status_id == payment_lunar_authorize_status_id %}
+                                                <option value="{{ order_status.order_status_id }}"
+                                                        selected="selected">{{ order_status.name }}</option>
+                                            {% else %}
+                                                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_capture_status_id"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_capture_status_id }}">{{ entry_capture_status_id }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_capture_status_id" id="payment_lunar_capture_status_id"
+                                            class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            {% if order_status.order_status_id == payment_lunar_capture_status_id %}
+                                                <option value="{{ order_status.order_status_id }}"
+                                                        selected="selected">{{ order_status.name }}</option>
+                                            {% else %}
+                                                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_refund_status_id"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_refund_status_id }}">{{ entry_refund_status_id }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_refund_status_id" id="payment_lunar_refund_status_id"
+                                            class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            {% if order_status.order_status_id == payment_lunar_refund_status_id %}
+                                                <option value="{{ order_status.order_status_id }}"
+                                                        selected="selected">{{ order_status.name }}</option>
+                                            {% else %}
+                                                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_cancel_status_id"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_cancel_status_id }}">{{ entry_cancel_status_id }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_cancel_status_id" id="payment_lunar_cancel_status_id"
+                                            class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            {% if order_status.order_status_id == payment_lunar_cancel_status_id %}
+                                                <option value="{{ order_status.order_status_id }}"
+                                                        selected="selected">{{ order_status.name }}</option>
+                                            {% else %}
+                                                <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_logging"><span data-toggle="tooltip"
+                                            title="{{ help_logging }}">{{ entry_logging }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_logging" id="payment_lunar_logging" class="form-control">
+                                        {% if payment_lunar_logging %}
+                                            <option value="1" selected="selected">{{ text_enabled }}</option>
+                                            <option value="0">{{ text_disabled }}</option>
+                                        {% else %}
+                                            <option value="1">{{ text_enabled }}</option>
+                                            <option value="0" selected="selected">{{ text_disabled }}</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_minimum_total"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_minimum_total }}">{{ entry_minimum_total }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payment_lunar_minimum_total"
+                                            value="{{ payment_lunar_minimum_total }}"
+                                            placeholder="{{ entry_minimum_total }}" id="payment_lunar_minimum_total"
+                                            class="form-control"/>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_geo_zone"><span data-toggle="tooltip"
+                                            title="{{ help_geo_zone }}">{{ entry_geo_zone }}</span></label>
+                                <div class="col-sm-10">
+                                    <select name="payment_lunar_geo_zone" id="payment_lunar_geo_zone" class="form-control">
+                                        <option value="0">{{ text_all_zones }}</option>
+                                        {% for geo_zone in geo_zones %}
+                                            {% if geo_zone.geo_zone_id == payment_lunar_geo_zone %}
+                                                <option value="{{ geo_zone.geo_zone_id }}"
+                                                        selected="selected">{{ geo_zone.name }}</option>
+                                            {% else %}
+                                                <option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="payment_lunar_sort_order"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_sort_order }}">{{ entry_sort_order }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payment_lunar_sort_order"
+                                            value="{{ payment_lunar_sort_order }}"
+                                            placeholder="{{ entry_sort_order }}" id="payment_lunar_sort_order"
+                                            class="form-control"/>
+                                </div>
+                            </div>
+
+                        </div>
 
                     </div>
+
                 </form>
             </div>
         </div>
@@ -84,7 +401,7 @@
 </div>
 
 
-<script type="text/javascript">
+{# <script type="text/javascript">
 
     $('#tabs a:first').tab('show');
 
@@ -207,6 +524,6 @@
         });
     }
 
-</script>
+</script> #}
 
 {{ footer }}

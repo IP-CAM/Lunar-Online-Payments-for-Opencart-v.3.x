@@ -9,6 +9,9 @@ $_['success_transaction_capture'] = 'Successful Captured transaction. Captured %
 $_['success_transaction_refund']  = 'Successful Refunded transaction. Refunded %s';
 $_['success_transaction_cancel']  = 'Successful Canceled transaction. Cancelled %s';
 
+// Button
+$_['button_confirm']              = 'Pay Now!';
+
 // Error
 $_['error_no_transaction_found']       = 'No transaction reference found';
 $_['error_invalid_transaction_data']   = 'Invalid transaction';
@@ -24,4 +27,3 @@ $_['error_cancel_after_capture']       = 'Warning: You can\'t Cancel transaction
 $_['error_message']                    = 'Transaction Error!';
 
 // Warning
-$_['warning_test_mode'] = 'TEST MODE ENABLED. In test mode, you can use the card number 4100 0000 0000 0000 with any CVC and a valid expiration date.';
