@@ -1,6 +1,6 @@
 {
   "name": "lunar/plugin-opencart-3",
-  "description": "Lunar Online Payments for Opencart 3.x and 2.3+",
+  "description": "Lunar Online Payments for Opencart 3.x",
   "license": "MIT",
   "authors": [
     {
@@ -9,6 +9,12 @@
     }
   ],
   "require": {
-    "paylike/php-api": "^1.0.8"
-  }
+    "lunar/payments-api-sdk": "dev-initial-dev"
+  },
+  "repositories": [
+    {
+        "type": "vcs",
+        "url": "https://github.com/lunar/payments-api-sdk"
+    }
+  ]
 }
