@@ -166,14 +166,12 @@ class ControllerExtensionPaymentLunar extends Controller
                 if (! $order_captured) {
                     $type                = 'Authorize';
                     $transaction_amount  = 0;
-                    $total_amount        = 0;
                     $comment             = 'Lunar transaction: ref:' . $ref . "\r\n" . 'Authorized amount: ' . $order_info['total'] . ' (' . $order_info['currency_code'] . ')';
                     $new_order_status_id = $this->config->get('payment_lunar_authorize_status_id');
                     $json['success']     = $this->language->get('success_message_authorized');
                 } else {
                     $type                = 'Capture';
                     $transaction_amount  = $order_info['total'];
-                    $total_amount        = $order_info['total'];
                     $comment             = 'Lunar transaction: ref:' . $ref . "\r\n" . 'Captured amount: ' . $order_info['total'] . ' (' . $order_info['currency_code'] . ')';
                     $new_order_status_id = $this->config->get('payment_lunar_capture_status_id');
                     $json['success']     = $this->language->get('success_message_captured');
@@ -187,7 +185,6 @@ class ControllerExtensionPaymentLunar extends Controller
                                         transaction_currency = '" . $order_info['currency_code'] . "',
                                         order_amount = '" . $order_info['total'] . "',
                                         transaction_amount = '" . $transaction_amount . "',
-                                        total_amount = '" . $total_amount . "',
                                         history = '0',
                                         date_added = NOW()"
                                 );

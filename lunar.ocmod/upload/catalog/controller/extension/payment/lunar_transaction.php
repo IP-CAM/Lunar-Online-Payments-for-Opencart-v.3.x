@@ -245,7 +245,6 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
         }
 
         if (isset($response['transaction'])) {
-            $new_total_amount = $this->getFormattedAmount($response['transaction']['capturedAmount'] - $response['transaction']['refundedAmount'] - $response['transaction']['voidedAmount'], $history['transaction_currency'], true);
             $data = array(
                 'order_id'             => $history['order_id'],
                 'transaction_id'       => $ref,
@@ -253,7 +252,6 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
                 'transaction_currency' => $history['transaction_currency'],
                 'order_amount'         => $history['order_amount'],
                 'transaction_amount'   => $formattedAmount['formatted'],
-                'total_amount'         => $new_total_amount['converted'],
                 'history'              => '0',
                 'date_added'           => 'NOW()'
             );

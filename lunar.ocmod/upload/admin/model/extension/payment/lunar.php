@@ -12,7 +12,6 @@ class ModelExtensionPaymentLunar extends Model
          `transaction_currency` char(5) NOT NULL,
          `order_amount`         decimal(15,4) NOT NULL,
          `transaction_amount`   decimal(15,4) NOT NULL,
-         `total_amount`         decimal(15,4) NOT NULL,
          `history`              tinyint(1) NOT NULL,
          `date_added`           datetime NOT NULL,
          PRIMARY KEY (`lunar_transaction_id`)
