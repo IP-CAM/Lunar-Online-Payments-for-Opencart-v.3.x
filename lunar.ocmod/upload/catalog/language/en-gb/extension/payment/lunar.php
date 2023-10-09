@@ -1,6 +1,6 @@
 <?php
 
-$_['text_title'] = 'Credit Card';
+$_['text_title'] = 'Card';
 
 // Success
 $_['success_message_authorized']  = 'Order authorization successful!';

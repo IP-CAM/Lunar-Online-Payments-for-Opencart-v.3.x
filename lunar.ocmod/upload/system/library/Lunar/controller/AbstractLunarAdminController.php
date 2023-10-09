@@ -13,7 +13,9 @@ abstract class AbstractLunarAdminController extends \Controller
     protected $oc_token = '';
     protected $validationPublicKeys = ['live' => [], 'test' => []];
 
+    protected string $storeId = '';
     protected string $paymentMethodCode = '';
+    protected string $paymentMethodConfigCode = '';
     
     protected string $pluginVersion = '';
     protected ApiClient $lunarApiClient;
@@ -25,21 +27,26 @@ abstract class AbstractLunarAdminController extends \Controller
         $this->load->language(static::EXTENSION_PATH);
         $this->load->model('tool/image');
         $this->load->model('extension/payment/lunar');
+        $this->load->model('setting/setting');
 
         $this->model_extension_payment_lunar->install();
 
-        // $libraryPath = DIR_SYSTEM . 'library' . DIRECTORY_SEPARATOR. 'Lunar' .  DIRECTORY_SEPARATOR;
-        // $this->pluginVersion = json_decode(file_get_contents($libraryPath . 'composer.json'))->version;
+        $libraryPath = DIR_SYSTEM . 'library' . DIRECTORY_SEPARATOR. 'Lunar' .  DIRECTORY_SEPARATOR;
+        $this->pluginVersion = json_decode(file_get_contents($libraryPath . 'composer.json'))->version;
 
+        $this->storeId = $this->request->post['config_selected_store']
+                            ?? $this->request->get['store_id'] 
+                            ?? 0;
+
+        $data['config_selected_store'] = $this->storeId;
 
         $this->maybeUpdateStoreSettings();
 
         $this->document->setTitle($this->language->get('heading_title'));
 
-        /** Get all opencart stores, including default. */
         $data['stores'] = $this->getAllStoresAsArray();
         
-        // $data['plugin_version'] = $this->pluginVersion;
+        $data['plugin_version'] = $this->pluginVersion;
         
         $this->setAdminTexts($data);
 
@@ -73,19 +80,11 @@ abstract class AbstractLunarAdminController extends \Controller
 
         $data['ccLogos'] = $this->model_extension_payment_lunar->getCcLogos();
 
-        /** Select option in stores dropdown field. */
-        if (isset($this->request->post['config_selected_store'])) {
-            $data['config_selected_store'] = $this->request->post['config_selected_store'];
-        } else {
-            $data['config_selected_store'] = 0;
-        }
-
         $data['breadcrumbs']   = array();
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_home'),
             'href' => $this->url->link('common/dashboard', $this->oc_token . '=' . $this->session->data[ $this->oc_token ], true)
         );
-
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_extension'),
@@ -110,13 +109,12 @@ abstract class AbstractLunarAdminController extends \Controller
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer']      = $this->load->controller('common/footer');
 
-        $data['debugMode'] = isset($this->request->get['debug']) || ($this->config->get('payment_lunar_api_mode') == 'test');
-
+        $data['debugMode'] = isset($this->request->get['debug']) || ($this->getConfigValue('api_mode') == 'test');
 
         if (
-            is_null($this->config->get('payment_lunar_method_title'))
-            || is_null($this->config->get('payment_lunar_app_key_live'))
-            || is_null($this->config->get('payment_lunar_public_key_live'))
+            is_null($this->getConfigValue('method_title'))
+            || is_null($this->getConfigValue('app_key_live'))
+            || is_null($this->getConfigValue('public_key_live'))
         ) {
             $data['warning'] = $this->language->get('text_setting_review_required');
         }
@@ -137,7 +135,8 @@ abstract class AbstractLunarAdminController extends \Controller
             $data['success'] = '';
         }
 
-        $data['methodCode'] = 'payment_lunar_' . $this->paymentMethodCode;
+        $data['methodCode'] = $this->paymentMethodCode;
+
         $this->response->setOutput($this->load->view('extension/payment/lunar', $data));
     }
 
@@ -158,30 +157,33 @@ abstract class AbstractLunarAdminController extends \Controller
      */
     private function setPostOrConfigValue($key, &$data, $default = '')
     {
-        $configKey = 'payment_lunar_' . $this->paymentMethodCode . '_' . $key;
+        $configKey = $this->paymentMethodConfigCode . '_' . $key;
 
-        if (isset($this->request->post[$configKey])) {
-            $data[$key] = $this->request->post[$configKey];
+        if (isset($this->request->post[$key])) {
+            $data[$key] = $this->request->post[$key];
         } else {
-            $data[$key] = $this->config->get($configKey);
+            $data[$key] = $this->model_setting_setting->getSettingValue($configKey, $this->storeId);
         }
         
         if ($default) {
-            if (!is_null($this->config->get($configKey))) {
-                $data[$key] = $this->config->get($configKey);
+            if (!is_null($this->model_setting_setting->getSettingValue($configKey, $this->storeId))) {
+                $data[$key] = $this->model_setting_setting->getSettingValue($configKey, $this->storeId);
             } else {
                 $data[$key] = $default;
             }
         }
     }
 
-
-    protected function validate()
+    /**
+     * 
+     */
+    private function validate()
     {
         if (! $this->user->hasPermission('modify', static::EXTENSION_PATH)) {
             $this->error['warning'] = $this->language->get('error_permission');
         }
-        if ($this->request->post['payment_lunar_method_title'] == '') {
+
+        if (($this->request->post['method_title'] ?? null) == '') {
             $this->error['error_payment_method_title'] = $this->language->get('error_payment_method_title');
         }
 
@@ -213,45 +215,18 @@ abstract class AbstractLunarAdminController extends \Controller
         //     }
         // }
 
-        if (! is_numeric($this->request->post['payment_lunar_minimum_total'])) {
-            $this->request->post['payment_lunar_minimum_total'] = 0;
+        if (! is_numeric($this->request->post['minimum_total'] ?? null)) {
+            $this->request->post['minimum_total'] = 0;
         }
-        if (! is_numeric($this->request->post['payment_lunar_sort_order'])) {
-            $this->request->post['payment_lunar_sort_order'] = 0;
+        if (! is_numeric($this->request->post['sort_order'] ?? null)) {
+            $this->request->post['sort_order'] = 0;
         }
+
         if ($this->error && ! isset($this->error['warning'])) {
             $this->error['warning'] = $this->language->get('error_warning');
         }
+    
         return ! $this->error;
-    }
-
-
-    /**
-     * Get module settings for chosen store
-     */
-    public function get_store_settings()
-    {
-        /** Check if request is POST and store_id is set. */
-        if (('POST' == $this->request->server['REQUEST_METHOD']) && isset($this->request->post['store_id'])) {
-            $storeId = $this->request->post['store_id'];
-
-            echo json_encode($this->getSettingsData($storeId));
-
-        } else {
-            /** Returns an object with key as vendor_data_error. */
-            echo '{"lunar_data_error": "Operation not allowed"}';
-        }
-    }
-
-
-    /** Get module settings data by store id. */
-    private function getSettingsData($storeId)
-    {
-        /** Load setting model. */
-        $this->load->model('setting/setting');
-        $settingModel = $this->model_setting_setting;
-
-        return $settingModel->getSetting('payment_lunar_' . $this->paymentMethodCode, $storeId);
     }
 
     /**
@@ -262,11 +237,16 @@ abstract class AbstractLunarAdminController extends \Controller
     private function getAllStoresAsArray()
     {
         $storesArray   = [];
-        /** Push default store to stores array. It is not extracted with getStores(). */
+        /** Push default store to stores array. It's not extracted with getStores(). */
         $storesArray[] = [
             'store_id' => 0,
             'name'     => $this->config->get('config_name') . ' ' . $this->language->get('text_default'),
         ];
+
+        // $storesArray[] = [
+        //     'store_id' => 1,
+        //     'name'     => 'TEST STORE',
+        // ];
 
         $this->load->model('setting/store');
         /** Extract OpenCart stores. */
@@ -293,13 +273,19 @@ abstract class AbstractLunarAdminController extends \Controller
 
         $this->load->model('setting/setting');
 
-        /** Get store ID & Update selected store settings for this module. */
         $selectedStoreId = $this->request->post['config_selected_store'];
+        unset($this->request->post['config_selected_store']);
 
-        $this->model_setting_setting->editSetting('payment_lunar_' . $this->paymentMethodCode, $this->request->post, $selectedStoreId);
-        $redirect_url = $this->url->link('marketplace/extension', $this->oc_token . '=' . $this->session->data[ $this->oc_token ] . '&type=payment', true);
+        $updatedData = [];
+        // map post keys to config keys
+        foreach ($this->request->post as $k => $val) {
+            $updatedData[$this->paymentMethodConfigCode . '_' . $k] = $val;
+        }
 
-        $this->setDisabledStatusOnOtherStores('payment_lunar_' . $this->paymentMethodCode);
+        $this->model_setting_setting->editSetting($this->paymentMethodConfigCode, $updatedData, $selectedStoreId);
+        $redirect_url = $this->url->link(static::EXTENSION_PATH, 'store_id=' . $selectedStoreId . '&' . $this->oc_token . '=' . $this->session->data[ $this->oc_token ] . '&type=payment', true);
+
+        $this->setDisabledStatusOnOtherStores($this->paymentMethodConfigCode);
 
         $this->session->data['success'] = $this->language->get('text_success');
 
@@ -412,9 +398,9 @@ abstract class AbstractLunarAdminController extends \Controller
     /**
      * @return mixed
      */
-    protected function getConfigValue($configKey)
+    protected function getConfigValue($key)
     {
-        return $this->config->get('payment_lunar_' . $this->paymentMethodCode . '_' . $configKey);
+        return $this->config->get($this->paymentMethodConfigCode . '_' . $key);
     }
 
 
