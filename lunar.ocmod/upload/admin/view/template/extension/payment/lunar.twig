@@ -97,33 +97,6 @@
                                 </div>
                             </div>
 
-                            <div class="form-group required">
-                                <label class="col-sm-2 control-label" for="method_title"><span
-                                            data-toggle="tooltip"
-                                            title="{{ help_payment_method_title }}">{{ entry_payment_method_title }}</span></label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="method_title"
-                                            value="{{ method_title }}"
-                                            placeholder="{{ entry_payment_method_title }}"
-                                            id="method_title" class="form-control"/>
-                                    {% if error_payment_method_title %}
-                                        <div class="text-danger">{{ error_payment_method_title }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="col-sm-2 control-label" for="shop_title"><span
-                                            data-toggle="tooltip"
-                                            title="{{ help_shop_title }}">{{ entry_shop_title }}</span></label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="shop_title"
-                                            value="{{ shop_title }}"
-                                            placeholder="{{ entry_shop_title }}"
-                                            id="shop_title" class="form-control"/>
-                                </div>
-                            </div>
-
                             {#
                                 Show some fields only in debug mode
                             #}
@@ -223,6 +196,66 @@
                                 </div>
                             </div>
 
+                            {% if 'mobilePay' == methodCode %}
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="configuration_id"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_configuration_id }}">{{ entry_configuration_id }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="configuration_id"
+                                            value="{{ configuration_id }}"
+                                            placeholder="{{ entry_configuration_id }}"
+                                            id="configuration_id" class="form-control"/>
+                                    {% if error_configuration_id %}
+                                        <div class="text-danger">{{ error_configuration_id }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="logo_url"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_logo_url }}">{{ entry_logo_url }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="logo_url"
+                                            value="{{ logo_url }}"
+                                            placeholder="{{ entry_logo_url }}"
+                                            id="logo_url" class="form-control"/>
+                                    {% if error_logo_url %}
+                                        <div class="text-danger">{{ error_logo_url }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="method_title"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_method_title }}">{{ entry_method_title }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="method_title"
+                                            value="{{ method_title }}"
+                                            placeholder="{{ entry_method_title }}"
+                                            id="method_title" class="form-control"/>
+                                    {% if error_method_title %}
+                                        <div class="text-danger">{{ error_method_title }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="shop_title"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_shop_title }}">{{ entry_shop_title }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="shop_title"
+                                            value="{{ shop_title }}"
+                                            placeholder="{{ entry_shop_title }}"
+                                            id="shop_title" class="form-control"/>
+                                </div>
+                            </div>
+
+                            {% if 'card' == methodCode %}
                             <div class="form-group">
                                 <label class="col-sm-2 control-label"><span data-toggle="tooltip"
                                             title="{{ help_checkout_cc_logo }}">{{ entry_checkout_cc_logo }}</span></label>
@@ -246,13 +279,14 @@
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
 
                         </div>
 
 
-                            {# 
-                                ADVANCED SETTINGS
-                            #}
+                        {# 
+                            ADVANCED SETTINGS
+                        #}
 
                         <div class="tab-pane" id="tab-advanced-settings">
 
