@@ -1,5 +1,4 @@
 
-<div data-amount="{{ amount }}" style="float: left" id="lunar-payment-widget"></div>
 <div class="buttons">
   <div class="pull-right">
     <input type="button" value="{{ button_confirm }}" id="button-confirm" class="btn btn-primary" />
@@ -12,11 +11,8 @@
       $('.payment-alert').remove();
 
       $.ajax({
-        url: 'index.php?route=extension/payment/lunar/process_payment',
-        type: 'post',
-        data: {
-
-        },
+        url: '{{ paymentRedirectUrl }}',
+        type: 'POST',
         dataType: 'json',
         cache: false,
         
@@ -28,35 +24,22 @@
           $('#button-confirm').button('reset');
         },
 
-        success: function(json) {
-          if (json.hasOwnProperty('error')) {
-            var html = `<div class="alert alert-danger payment-alert">
-                          <i class="fa fa-exclamation-circle"></i> 
-                            Warning: ${json.error}
-                          <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        </div>`;
+        success: function(data) {
+console.log(data)
+          if (data.hasOwnProperty('error')) {
+            let html = `<div class="alert alert-danger payment-alert">
+                    <i class="fa fa-exclamation-circle"></i>
+                      ${data.error}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  </div>`;
             $('#button-confirm').closest('.buttons').before(html);
           }
-          if (json.hasOwnProperty('redirect')) {
-            var html = `<div class="alert alert-success payment-alert">
-                          <i class="fa fa-exclamation-circle"></i>
-                            ${json.success}
-                          <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        </div>`;
-            $('#button-confirm').closest('.buttons').before(html);
-            location.href = json.redirect;
+          if (data.hasOwnProperty('redirect')) {
+            location.href = data.redirect;
           }
         }
       });
 
     });
-
-    function getHtmlMessage(message, type = 'success') {
-      return `<div class="alert alert-success payment-alert">
-              <i class="fa fa-exclamation-circle"></i>
-                ${json.success}
-              <button type="button" class="close" data-dismiss="alert">&times;</button>
-            </div>`;
-    }
 
 </script>

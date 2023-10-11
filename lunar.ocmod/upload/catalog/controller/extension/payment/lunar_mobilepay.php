@@ -9,5 +9,5 @@ class ControllerExtensionPaymentLunarMobilePay extends AbstractLunarFrontControl
 {
     const EXTENSION_PATH = 'extension/payment/lunar_mobilepay';
 
-    public $paymentMethodCode = 'mobilePay';
+    public string $paymentMethodCode = 'mobilePay';
 }

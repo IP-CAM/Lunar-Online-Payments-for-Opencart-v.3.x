@@ -50,7 +50,7 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
              * - get last transaction
              */
             $this->load->model(self::THIS_MODEL_PATH);
-            $lastTransaction = $this->model_extension_payment_lunar_transaction->getLastModuleTransaction($order['order_id']);
+            $lastTransaction = $this->model_extension_payment_lunar_transaction->getLastTransaction($order['order_id']);
 
             /**
              * Create new Std object to be used in execute() method bellow.
@@ -115,7 +115,7 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
         $type         = $this->orderData->type;
         $input_amount = $this->orderData->amount;
 
-        $history = $this->model_extension_payment_lunar_transaction->getLastModuleTransaction($orderId);
+        $history = $this->model_extension_payment_lunar_transaction->getLastTransaction($orderId);
         $history['transaction_currency'] = strtoupper($history['transaction_currency']);
 
         if (is_null($history)) {

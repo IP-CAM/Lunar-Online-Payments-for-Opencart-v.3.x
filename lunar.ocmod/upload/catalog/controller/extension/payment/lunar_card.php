@@ -9,5 +9,5 @@ class ControllerExtensionPaymentLunarCard extends AbstractLunarFrontController
 {
     const EXTENSION_PATH = 'extension/payment/lunar_card';
 
-    public $paymentMethodCode = 'card';
+    public string $paymentMethodCode = 'card';
 }

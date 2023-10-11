@@ -5,9 +5,9 @@ class ModelExtensionPaymentLunarTransaction extends Model
     const LUNAR_DB_TABLE = DB_PREFIX . 'lunar_transaction';
 
     /**
-     * GET last transaction by query data parameters
+     * 
      */
-    public function getLastModuleTransaction($orderId)
+    public function getLastTransaction($orderId)
     {
         $moduleTransaction = $this->db->query("SELECT *
                                     FROM `" . self::LUNAR_DB_TABLE . "`
@@ -21,7 +21,7 @@ class ModelExtensionPaymentLunarTransaction extends Model
     }
 
     /**
-     * ADD transaction in {vendor}_transaction table
+     * 
      */
     public function addTransaction($data)
     {
@@ -45,7 +45,7 @@ class ModelExtensionPaymentLunarTransaction extends Model
 
 
     /**
-     * UPDATE order
+     * 
      */
     public function updateOrder($data, $new_order_status_id)
     {
