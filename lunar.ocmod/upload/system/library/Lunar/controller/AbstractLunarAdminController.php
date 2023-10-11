@@ -91,6 +91,14 @@ abstract class AbstractLunarAdminController extends \Controller
     }
 
     /**
+     * @return mixed
+     */
+    protected function getSettingValue($key)
+    {
+        return $this->model_setting_setting->getSettingValue($this->paymentMethodConfigCode . '_' . $key, $this->storeId);
+    }
+
+    /**
      * 
      */
     private function maybeSetErrors(&$data, $errorKeys)
@@ -428,16 +436,6 @@ abstract class AbstractLunarAdminController extends \Controller
             return $error;
         }
     }
-    
-    /**
-     * @TODO check this ... maybe remove or update
-     * @return mixed
-     */
-    protected function getSettingValue($key)
-    {
-        return $this->model_setting_setting->getSettingValue($this->paymentMethodConfigCode . '_' . $key, $this->storeId);
-    }
-
 
     private function setAdminTexts(&$data)
     {

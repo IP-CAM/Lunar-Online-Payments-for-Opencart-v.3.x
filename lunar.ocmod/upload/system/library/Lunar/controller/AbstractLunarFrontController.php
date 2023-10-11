@@ -120,15 +120,15 @@ abstract class AbstractLunarFrontController extends \Controller
     /**
      * 
      */
-    protected function getPaymentIntentFromTransaction()
+    protected function savePaymentIntentOnTransaction($paymentIntentId)
     {
-
+        
     }
 
     /**
      * 
      */
-    protected function savePaymentIntentOnTransaction($paymentIntentId)
+    protected function getPaymentIntentFromTransaction()
     {
 
     }
