@@ -49,39 +49,41 @@ abstract class AbstractLunarAdminController extends \Controller
         $this->setAdminTexts($data);
 
         // errors
-        $this->maybeSetError('error_method_title', $data);
-        $this->maybeSetError('error_public_key_test', $data);
-        $this->maybeSetError('error_app_key_test', $data);
-        $this->maybeSetError('error_public_key_live', $data);
-        $this->maybeSetError('error_app_key_live', $data);
-        $this->maybeSetError('error_logo_url', $data);
-        $this->maybeSetError('error_configuration_id', $data);
+        $this->maybeSetErrors($data, [
+            'error_method_title',
+            'error_public_key_test',
+            'error_app_key_test',
+            'error_public_key_live',
+            'error_app_key_live',
+            'error_logo_url',
+            'error_configuration_id',
+        ]);
 
-        // post / config
-        $this->setPostOrConfigValue('api_mode', $data);
-        $this->setPostOrConfigValue('app_key_test', $data);
-        $this->setPostOrConfigValue('public_key_test', $data);
-        $this->setPostOrConfigValue('app_key_live', $data);
-        $this->setPostOrConfigValue('public_key_live', $data);
-        $this->setPostOrConfigValue('capture_mode', $data, 'delayed');
-        $this->setPostOrConfigValue('logo_url', $data);
-        $this->setPostOrConfigValue('configuration_id', $data);
-        $this->setPostOrConfigValue('method_title', $data, $this->language->get('default_method_title'));
-        $this->setPostOrConfigValue('shop_title', $data, $this->config->get('config_meta_title'));
-        $this->setPostOrConfigValue('description', $data);
-        $this->setPostOrConfigValue('checkout_cc_logo', $data, $this->language->get('default_payment_lunar_checkout_cc_logo'));
-
-        $this->setPostOrConfigValue('authorize_status_id', $data, 1);
-        $this->setPostOrConfigValue('capture_status_id', $data, 5);
-        $this->setPostOrConfigValue('refund_status_id', $data, 11);
-        $this->setPostOrConfigValue('cancel_status_id', $data, 16);
-        $this->setPostOrConfigValue('status', $data);
-        $this->setPostOrConfigValue('logging', $data);
-        $this->setPostOrConfigValue('minimum_total', $data, 0);
-        $this->setPostOrConfigValue('geo_zone', $data);
-        $this->setPostOrConfigValue('sort_order', $data, 0);
-
-        $data['debugMode'] = isset($this->request->get['debug']) || ($this->getConfigValue('api_mode') == 'test');
+        $this->setPostOrSettingValue($data, [
+            'api_mode' => null,
+            'app_key_test' => null,
+            'public_key_test' => null,
+            'app_key_live' => null,
+            'public_key_live' => null,
+            'capture_mode' => 'delayed',
+            'logo_url' => null,
+            'configuration_id' => null,
+            'method_title' => $this->language->get('default_method_title'),
+            'shop_title' => $this->config->get('config_meta_title'),
+            'description' => null,
+            'checkout_cc_logo' => $this->language->get('default_checkout_cc_logo'),
+            'authorize_status_id' => 1,
+            'capture_status_id' => 5,
+            'refund_status_id' => 11,
+            'cancel_status_id' => 16,
+            'status' => null,
+            'logging' => null,
+            'minimum_total' => 0,
+            'geo_zone' => null,
+            'sort_order' => 0,
+        ]);
+        
+        $data['debugMode'] = isset($this->request->get['debug']) || ($this->getSettingValue('api_mode') == 'test');
 
         $this->maybeSetAlertMessages($data);
 
@@ -91,12 +93,14 @@ abstract class AbstractLunarAdminController extends \Controller
     /**
      * 
      */
-    private function maybeSetError($key, &$data)
+    private function maybeSetErrors(&$data, $errorKeys)
     {
-        if (isset($this->error[$key])) {
-            $data[$key] = $this->error[$key];
-        } else {
-            $data[$key] = '';
+        foreach ($errorKeys as $errorKey) {
+            if (isset($this->error[$errorKey])) {
+                $data[$errorKey] = $this->error[$errorKey];
+            } else {
+                $data[$errorKey] = '';
+            }
         }
     }
 
@@ -106,9 +110,9 @@ abstract class AbstractLunarAdminController extends \Controller
     private function maybeSetAlertMessages(&$data)
     {
         if (
-            is_null($this->getConfigValue('method_title'))
-            || is_null($this->getConfigValue('app_key_live'))
-            || is_null($this->getConfigValue('public_key_live'))
+            is_null($this->getSettingValue('method_title'))
+            || is_null($this->getSettingValue('app_key_live'))
+            || is_null($this->getSettingValue('public_key_live'))
         ) {
             $data['warning'] = $this->language->get('text_setting_review_required');
         }
@@ -133,21 +137,21 @@ abstract class AbstractLunarAdminController extends \Controller
     /**
      * 
      */
-    private function setPostOrConfigValue($key, &$data, $default = '')
+    private function setPostOrSettingValue(&$data, $settingKeys)
     {
-        $configKey = $this->paymentMethodConfigCode . '_' . $key;
-
-        if (isset($this->request->post[$key])) {
-            $data[$key] = $this->request->post[$key];
-        } else {
-            $data[$key] = $this->model_setting_setting->getSettingValue($configKey, $this->storeId);
-        }
-        
-        if ($default) {
-            if (!is_null($this->model_setting_setting->getSettingValue($configKey, $this->storeId))) {
-                $data[$key] = $this->model_setting_setting->getSettingValue($configKey, $this->storeId);
+        foreach ($settingKeys as $settingKey => $default) {
+            if (isset($this->request->post[$settingKey])) {
+                $data[$settingKey] = $this->request->post[$settingKey];
             } else {
-                $data[$key] = $default;
+                $data[$settingKey] = $this->getSettingValue($settingKey);
+            }
+            
+            if (!is_null($default)) {
+                if (!is_null($this->getSettingValue($settingKey))) {
+                    $data[$settingKey] = $this->getSettingValue($settingKey);
+                } else {
+                    $data[$settingKey] = $default;
+                }
             }
         }
     }
@@ -429,76 +433,14 @@ abstract class AbstractLunarAdminController extends \Controller
      * @TODO check this ... maybe remove or update
      * @return mixed
      */
-    protected function getConfigValue($key)
+    protected function getSettingValue($key)
     {
-        return $this->config->get($this->paymentMethodConfigCode . '_' . $key);
+        return $this->model_setting_setting->getSettingValue($this->paymentMethodConfigCode . '_' . $key, $this->storeId);
     }
 
 
     private function setAdminTexts(&$data)
     {
-        $data['heading_title']               = $this->language->get('heading_title');
-        
-        $data['button_save']                 = $this->language->get('button_save');
-        $data['button_cancel']               = $this->language->get('button_cancel');
-        
-        $data['text_enabled']                = $this->language->get('text_enabled');
-        $data['text_disabled']               = $this->language->get('text_disabled');
-        $data['text_test']                   = $this->language->get('text_test');
-        $data['text_live']                   = $this->language->get('text_live');
-        $data['text_capture_instant']        = $this->language->get('text_capture_instant');
-        $data['text_capture_delayed']        = $this->language->get('text_capture_delayed');
-        $data['text_description']            = $this->language->get('text_description');
-        $data['text_all_zones']              = $this->language->get('text_all_zones');
-        $data['text_edit_settings']          = $this->language->get('text_edit_settings');
-        $data['text_general_settings']       = $this->language->get('text_general_settings');
-        $data['text_advanced_settings']      = $this->language->get('text_advanced_settings');
-
-        $data['entry_api_mode']              = $this->language->get('entry_api_mode');
-        $data['entry_public_key_test']       = $this->language->get('entry_public_key_test');
-        $data['entry_app_key_test']          = $this->language->get('entry_app_key_test');
-        $data['entry_public_key_live']       = $this->language->get('entry_public_key_live');
-        $data['entry_app_key_live']          = $this->language->get('entry_app_key_live');
-        $data['entry_capture_mode']          = $this->language->get('entry_capture_mode');
-        $data['entry_logo_url']              = $this->language->get('entry_logo_url');
-        $data['entry_configuration_id']      = $this->language->get('entry_configuration_id');
-        $data['entry_method_title']          = $this->language->get('entry_method_title');
-        $data['entry_shop_title']            = $this->language->get('entry_shop_title');
-        $data['entry_checkout_cc_logo']      = $this->language->get('entry_checkout_cc_logo');
-        $data['entry_authorize_status_id']   = $this->language->get('entry_authorize_status_id');
-        $data['entry_capture_status_id']     = $this->language->get('entry_capture_status_id');
-        $data['entry_refund_status_id']      = $this->language->get('entry_refund_status_id');
-        $data['entry_cancel_status_id']      = $this->language->get('entry_cancel_status_id');
-        $data['entry_payment_enabled']       = $this->language->get('entry_payment_enabled');
-        $data['entry_logging']               = $this->language->get('entry_logging');
-        $data['entry_minimum_total']         = $this->language->get('entry_minimum_total');
-        $data['entry_geo_zone']              = $this->language->get('entry_geo_zone');
-        $data['entry_sort_order']            = $this->language->get('entry_sort_order');
-        $data['entry_store']                 = $this->language->get('entry_store');
-
-        $data['help_api_mode']               = $this->language->get('help_api_mode');
-        $data['help_public_key_test']        = $this->language->get('help_public_key_test');
-        $data['help_app_key_test']           = $this->language->get('help_app_key_test');
-        $data['help_public_key_live']        = $this->language->get('help_public_key_live');
-        $data['help_app_key_live']           = $this->language->get('help_app_key_live');
-        $data['help_capture_mode']           = $this->language->get('help_capture_mode');
-        $data['help_logo_url']               = $this->language->get('help_logo_url');
-        $data['help_configuration_id']       = $this->language->get('help_configuration_id');
-        $data['help_method_title']           = $this->language->get('help_method_title');
-        $data['help_shop_title']             = $this->language->get('help_shop_title');
-        $data['help_checkout_description']   = $this->language->get('help_checkout_description');
-        $data['help_checkout_cc_logo']       = $this->language->get('help_checkout_cc_logo');
-        $data['help_authorize_status_id']    = $this->language->get('help_authorize_status_id');
-        $data['help_capture_status_id']      = $this->language->get('help_capture_status_id');
-        $data['help_refund_status_id']       = $this->language->get('help_refund_status_id');
-        $data['help_cancel_status_id']       = $this->language->get('help_cancel_status_id');
-        $data['help_payment_enabled']        = $this->language->get('help_payment_enabled');
-        $data['help_logging']                = $this->language->get('help_logging');
-        $data['help_minimum_total']          = $this->language->get('help_minimum_total');
-        $data['help_geo_zone']               = $this->language->get('help_geo_zone');
-        $data['help_sort_order']             = $this->language->get('help_sort_order');
-        $data['help_select_store']           = $this->language->get('help_select_store');
-
         $data['ccLogos'] = $this->model_extension_payment_lunar->getCcLogos();
 
         $data['breadcrumbs']   = array();
@@ -529,12 +471,83 @@ abstract class AbstractLunarAdminController extends \Controller
         $data['header']      = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer']      = $this->load->controller('common/footer');
+
+        $this->setTexts($data, [
+            'heading_title',
+            'button_save',
+            'button_cancel',
+            'text_enabled',
+            'text_disabled',
+            'text_test',
+            'text_live',
+            'text_capture_instant',
+            'text_capture_delayed',
+            'text_description',
+            'text_all_zones',
+            'text_edit_settings',
+            'text_general_settings',
+            'text_advanced_settings',
+            'entry_api_mode',
+            'entry_public_key_test',
+            'entry_app_key_test',
+            'entry_public_key_live',
+            'entry_app_key_live',
+            'entry_capture_mode',
+            'entry_logo_url',
+            'entry_configuration_id',
+            'entry_method_title',
+            'entry_shop_title',
+            'entry_checkout_cc_logo',
+            'entry_authorize_status_id',
+            'entry_capture_status_id',
+            'entry_refund_status_id',
+            'entry_cancel_status_id',
+            'entry_payment_enabled',
+            'entry_logging',
+            'entry_minimum_total',
+            'entry_geo_zone',
+            'entry_sort_order',
+            'entry_store',
+            'help_api_mode',
+            'help_public_key_test',
+            'help_app_key_test',
+            'help_public_key_live',
+            'help_app_key_live',
+            'help_capture_mode',
+            'help_logo_url',
+            'help_configuration_id',
+            'help_method_title',
+            'help_shop_title',
+            'help_checkout_description',
+            'help_checkout_cc_logo',
+            'help_authorize_status_id',
+            'help_capture_status_id',
+            'help_refund_status_id',
+            'help_cancel_status_id',
+            'help_payment_enabled',
+            'help_logging',
+            'help_minimum_total',
+            'help_geo_zone',
+            'help_sort_order',
+            'help_select_store',
+        ]);
     }
 
     /**
      * 
      */
-	public function install() {
+	public function setTexts(&$data, $textKeys)
+    {
+        foreach ($textKeys as $textKey) {
+            $data[$textKey] = $this->language->get($textKey);
+        }
+	}
+
+    /**
+     * 
+     */
+	public function install()
+    {
 		if ($this->user->hasPermission('modify', 'marketplace/extension')) {
 			$this->load->model('extension/payment/lunar');
 
@@ -545,7 +558,8 @@ abstract class AbstractLunarAdminController extends \Controller
     /**
      * 
      */
-	public function uninstall() {
+	public function uninstall()
+    {
 		if ($this->user->hasPermission('modify', 'marketplace/extension')) {
 			$this->load->model('extension/payment/lunar');
 

@@ -18,7 +18,7 @@ $_['text_test']                    = 'Test';
 $_['text_live']                    = 'Live';
 
 //Default
-$_['default_payment_lunar_checkout_cc_logo'] = array(
+$_['default_checkout_cc_logo'] = array(
     'mastercard.png',
     'maestro.png',
     'visa.png',
