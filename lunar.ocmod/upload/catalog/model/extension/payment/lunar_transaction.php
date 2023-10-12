@@ -9,7 +9,7 @@ class ModelExtensionPaymentLunarTransaction extends Model
      */
     public function getLastTransaction($orderId)
     {
-        $moduleTransaction = $this->db->query("SELECT *
+        $lastTransaction = $this->db->query("SELECT *
                                     FROM `" . self::LUNAR_DB_TABLE . "`
                                     WHERE order_id = '" . $orderId . "'
                                     ORDER BY lunar_transaction_id
@@ -17,7 +17,7 @@ class ModelExtensionPaymentLunarTransaction extends Model
                                     LIMIT 1"
                                 );
 
-        return $moduleTransaction->row;
+        return $lastTransaction->row;
     }
 
     /**

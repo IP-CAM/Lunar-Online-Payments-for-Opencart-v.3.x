@@ -17,6 +17,7 @@ $_['error_no_transaction_found']       = 'No transaction reference found';
 $_['error_invalid_transaction_data']   = 'Invalid transaction';
 $_['error_transaction_error_returned'] = 'Transaction error';
 $_['error_empty_transaction_result']   = 'Invalid transaction';
+$_['error_transaction_not_captured']   = 'Transaction authorized. Payment capture error!';
 $_['error_transaction']                = 'Error: Invalid Transaction data!';
 $_['error_amount_format']              = 'Error: Invalid Amount!';
 $_['error_setup']                      = 'Error: Lunar setup is not finished. Please review Lunar settings!';

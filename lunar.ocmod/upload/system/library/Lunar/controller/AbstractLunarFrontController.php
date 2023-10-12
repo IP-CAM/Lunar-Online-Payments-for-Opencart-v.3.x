@@ -4,6 +4,7 @@ require_once(DIR_SYSTEM . 'library/Lunar/vendor/autoload.php');
 
 
 use Lunar\Lunar as ApiClient;
+use Lunar\Exception\ApiException;
 
 /**
  * 
@@ -13,29 +14,59 @@ abstract class AbstractLunarFrontController extends \Controller
     const EXTENSION_PATH = '';
     const REMOTE_URL = 'https://pay.lunar.money/?id=';
     const TEST_REMOTE_URL = 'https://hosted-checkout-git-develop-lunar-app.vercel.app/?id=';
-    const LUNAR_DB_TABLE = 'lunar_transaction';
+    const LUNAR_DB_TABLE = DB_PREFIX . 'lunar_transaction';
 
     protected string $paymentMethodCode = '';
 
     protected ApiClient $lunarApiClient;
 
     protected $errors = [];
-    protected string $intentIdKey = '_lunar_intent_id';
     protected bool $testMode = false;
+    protected bool $isInstantMode = false;
     protected array $args = [];
     protected string $publicKey = '';
     protected ?string $paymentIntentId = null;
-    protected array $dbTransaction = [];
+    protected ?array $dbTransaction = null;
 
     /** @var int|string|null */
     protected $orderId;
+
+    public function __construct($registry) {
+		parent::__construct($registry);
+
+        $this->load->language('extension/payment/lunar');
+        $this->load->model(static::EXTENSION_PATH);
+        $this->load->model('extension/payment/lunar_transaction');
+        $this->load->model('checkout/order');
+
+        $this->logger = new Log('lunar_' . $this->paymentMethodCode . '.log');
+
+        $this->orderId = $this->request->get['order_id']
+                            ?? $this->session->data['order_id']
+                            ?? null;
+
+        $this->order = $this->model_checkout_order->getOrder($this->orderId);
+
+        $this->isInstantMode = 'instant' == $this->getConfigValue('capture_mode');
+
+        $this->testMode = 'test' == $this->getConfigValue('api_mode');
+        if ($this->testMode) {
+            $this->publicKey =  $this->getConfigValue('public_key_test');
+            $privateKey =  $this->getConfigValue('app_key_test');
+        } else {
+            $this->publicKey = $this->getConfigValue('public_key_live');
+            $privateKey = $this->getConfigValue('app_key_live');
+        }
+
+        /** API Client instance */
+        $this->lunarApiClient = new ApiClient($privateKey, null, $this->testMode);
+	}
 
     /**
      * 
      */
     public function index()
     {
- 
         $data['button_confirm'] = $this->language->get('button_confirm');
         $data['paymentRedirectUrl'] = $this->url->link(static::EXTENSION_PATH . '/redirect');
 
@@ -45,39 +76,9 @@ abstract class AbstractLunarFrontController extends \Controller
     /**
      * 
      */
-    public function init()
-    {   
-        $this->load->language('extension/payment/lunar');
-        $this->load->model(static::EXTENSION_PATH);
-        $this->load->model('extension/payment/lunar_transaction');
-        $this->load->model('checkout/order');
-
-        $this->order = $this->model_checkout_order->getOrder($this->orderId);
-
-        $this->testMode = 'test' == $this->getConfigValue('api_mode');
-        if ($this->testMode) {
-            $this->publicKey =  $this->getConfigValue('public_key_test');
-            $privateKey =  $this->getConfigValue('secret_key_test');
-        } else {
-            $this->publicKey = $this->getConfigValue('public_key_live');
-            $privateKey = $this->getConfigValue('secret_key_live');
-        }
-
-        /** API Client instance */
-        $this->lunarApiClient = new ApiClient($privateKey);
-    }
-
-    /**
-     * 
-     */
     public function redirect()
     {
-        $this->orderId = $this->session->data['order_id'];
-
-        $this->init();
-        
-        $this->setArgs();
-
+       $this->setArgs();
 
         $this->paymentIntentId = $this->getPaymentIntentFromTransaction($this->dbTransaction);
         if (!$this->paymentIntentId) {
@@ -106,18 +107,91 @@ abstract class AbstractLunarFrontController extends \Controller
      */
     public function callback()
     {
-        $this->init();
-        //$this->orderId = $this->session->data['order_id'];
+        $this->load->language('extension/payment/lunar');
 
-        $this->orderId = $this->request->get['order_id'];
+        $this->paymentIntentId = $this->getPaymentIntentFromTransaction();
 
-        // ............................
+        if (! $this->paymentIntentId) {
+            $this->writeLog('No payment intent id found');
+            $this->session->data['error_warning'] = $this->language->get('error_no_transaction_found');;
+            $this->response->redirect($this->url->link('checkout/checkout'));
+        }
+
+        $this->writeLog('************');
+        $this->writeLog('Lunar callback. Transaction reference: ' . $this->paymentIntentId);
+
+        $apiResponse = $this->lunarApiClient->payments()->fetch($this->paymentIntentId);        
+
+        if (! $this->parseApiTransactionResponse($apiResponse)) {
+            $errorResponse = $this->getResponseError($apiResponse);
+            $this->writeLog('Api error response: ' . $errorResponse);
+            $this->session->data['error_warning'] = $errorResponse;
+            $this->response->redirect($this->url->link('checkout/checkout'));
+        }
+
+        $params = [
+            'amount' => [
+                'currency' => $this->order['currency_code'],
+                'decimal' => (string) $this->order['total'],
+            ]
+        ];
+        
+        $this->writeLog(json_encode(['Callback payment params' => $params]));
+
+        $transactionType = 'Authorize';
+        $newOrderStatus = $this->getConfigValue('authorize_status_id');
+        $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
+                    . 'transaction ref: ' . $this->paymentIntentId 
+                    . "\r\n" . 'Authorized amount: ' . $apiResponse['amount']['decimal']
+                    . ' (' . $apiResponse['amount']['currency'] . ')';
+        $successMessage = $this->language->get('success_message_authorized');
+        
+        if ($this->isInstantMode) {
+
+            try {
+                $apiResponse = $this->lunarApiClient->payments()->capture($this->paymentIntentId, $params);
+
+                if ('completed' != $apiResponse['captureState']) {
+                    $this->session->data['error_warning'] = $apiResponse['declinedReason'] ?? $this->language->get('error_transaction_not_captured');
+                    $this->response->redirect($this->url->link('checkout/checkout'));
+                }
+
+            } catch (ApiException $e) {
+                $this->session->data['error_warning'] = $e->getMessage();
+                $this->response->redirect($this->url->link('checkout/checkout'));
+            }
+
+            $transactionType = 'Capture';
+            $newOrderStatus = $this->getConfigValue('capture_status_id');
+            $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
+                        . 'transaction ref: ' . $this->paymentIntentId 
+                        . "\r\n" . 'Captured amount: ' . $this->order['total']
+                        . ' (' . $this->order['currency_code'] . ')';
+            $successMessage = $this->language->get('success_message_captured');
+        }
+            
+        $transactionData = [
+            'order_id' => $this->orderId,
+            'transaction_id' => $this->paymentIntentId,
+            'transaction_type' => $transactionType,
+            'transaction_currency' => $apiResponse['amount']['currency'],
+            'order_amount' => $this->order['total'],
+            'transaction_amount' => $apiResponse['amount']['decimal'],
+        ];
+
+        $this->model_checkout_order->addOrderHistory($this->orderId, $newOrderStatus, $comment);
+
+        $this->updateTransaction($transactionData);
+
+        $this->session->data['success'] = $successMessage;
+        $this->response->redirect($this->url->link('checkout/success'));
     }
+
 
     /**
      * 
      */
-    protected function setArgs()
+    private function setArgs()
     {
         $pluginVersion = json_decode(file_get_contents(dirname(__DIR__) . '/composer.json'))->version;
 
@@ -135,7 +209,7 @@ abstract class AbstractLunarFrontController extends \Controller
 
 
         $this->args['amount'] = [
-            'currency' => strtoupper($order['currency_code']),
+            'currency' => $order['currency_code'],
             'decimal' => (string) $order['total'],
         ];
 
@@ -169,8 +243,7 @@ abstract class AbstractLunarFrontController extends \Controller
         }
 
         $this->args['redirectUrl'] = $this->url->link(
-            static::EXTENSION_PATH . '/callback', 
-            'order_id=' . $this->orderId
+            static::EXTENSION_PATH . '/callback&order_id=' . $this->orderId
         );
 
         $this->args['preferredPaymentMethod'] = $this->paymentMethodCode;
@@ -179,8 +252,9 @@ abstract class AbstractLunarFrontController extends \Controller
     /**
      * 
      */
-    protected function savePaymentIntentOnTransaction()
+    private function savePaymentIntentOnTransaction()
     {
+        // prevent inserting init transaction multiple times
         $this->db->query("DELETE FROM `" . self::LUNAR_DB_TABLE . "`
                             WHERE order_id = '" . $this->orderId . "'
                             AND transaction_type = 'INIT'");
@@ -200,20 +274,103 @@ abstract class AbstractLunarFrontController extends \Controller
     /**
      * 
      */
-    protected function getPaymentIntentFromTransaction()
+    private function getPaymentIntentFromTransaction()
     {
         $initTransaction = $this->model_extension_payment_lunar_transaction->getLastTransaction($this->orderId);
         return ($initTransaction && $initTransaction['transaction_type'] == 'INIT')
                 ? $initTransaction['transaction_id']
                 : null;
     }
+
+    /**
+     * 
+     */
+    private function updateTransaction($data)
+    {
+        $this->db->query("UPDATE `" . self::LUNAR_DB_TABLE . "`
+                            SET order_id = '" . $data['order_id'] . "',
+                                transaction_id = '" . $data['transaction_id'] . "',
+                                transaction_type = '" . $data['transaction_type'] . "',
+                                transaction_currency = '" . $data['transaction_currency'] . "',
+                                order_amount = '" . $data['order_amount'] . "',
+                                transaction_amount = '" . $data['transaction_amount'] . "',
+                                history = '0',
+                                date_added = NOW()
+                            WHERE order_id = '" . $data['order_id'] . "'
+                            AND transaction_type = 'INIT'"
+                        );
+    }
     
+    /**
+     * Parses api transaction response for errors
+     */
+    private function parseApiTransactionResponse($apiResponse)
+    {
+        if (! $this->isTransactionSuccessful($apiResponse)) {
+            $this->logger->write("Transaction with error: " . json_encode($apiResponse));
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+	 * Checks if the transaction was successful and
+	 * the data was not tempered with.
+     * 
+     * @return bool
+     */
+    private function isTransactionSuccessful($apiResponse)
+    {
+        $matchCurrency = $this->order['currency_code'] == $apiResponse['amount']['currency'];
+        $matchAmount = (string) $this->order['total'] == $apiResponse['amount']['decimal'];
+
+        return (true == $apiResponse['authorisationCreated'] && $matchCurrency && $matchAmount);
+    }
+
+    /**
+     * Gets errors from a failed api request
+     * @param array $result The result returned by the api wrapper.
+     * @return string
+     */
+    private function getResponseError($result)
+    {
+        $error = [];
+        // if this is just one error
+        if (isset($result['text'])) {
+            return $result['text'];
+        }
+
+        if (isset($result['code']) && isset($result['error'])) {
+            return $result['code'] . '-' . $result['error'];
+        }
+
+        // otherwise this is a multi field error
+        if ($result) {
+            foreach ($result as $fieldError) {
+                $error[] = $fieldError['field'] . ':' . $fieldError['message'];
+            }
+        }
+
+        return implode(' ', $error);
+    }
+
     /**
      * @return mixed
      */
-    protected function getConfigValue($configKey)
+    private function getConfigValue($configKey)
     {
         return $this->config->get('payment_lunar_' . $this->paymentMethodCode  . '_' . $configKey);
+    }
+
+    /**
+     * 
+     */
+    private function writeLog($logMessage)
+    {
+        if ($this->getConfigValue('logging')) {
+            $this->logger->write($logMessage);
+        }
     }
 
     /**
@@ -246,12 +403,12 @@ abstract class AbstractLunarFrontController extends \Controller
                 "status"  => "valid",
                 "limit"   => [
                     "decimal"  => "25000.99",
-                    "currency" => strtoupper($this->order['currency_code']),
+                    "currency" => $this->order['currency_code'],
                     
                 ],
                 "balance" => [
                     "decimal"  => "25000.99",
-                    "currency" => strtoupper($this->order['currency_code']),
+                    "currency" => $this->order['currency_code'],
                     
                 ]
             ],
