@@ -149,10 +149,10 @@ abstract class AbstractLunarFrontController extends \Controller
         if ($this->isInstantMode) {
 
             try {
-                $apiResponse = $this->lunarApiClient->payments()->capture($this->paymentIntentId, $params);
+                $captureResponse = $this->lunarApiClient->payments()->capture($this->paymentIntentId, $params);
 
-                if ('completed' != $apiResponse['captureState']) {
-                    $this->session->data['error_warning'] = $apiResponse['declinedReason'] ?? $this->language->get('error_transaction_not_captured');
+                if ('completed' != $captureResponse['captureState']) {
+                    $this->session->data['error_warning'] = $captureResponse['declinedReason'] ?? $this->language->get('error_transaction_not_captured');
                     $this->response->redirect($this->url->link('checkout/checkout'));
                 }
 
@@ -165,8 +165,8 @@ abstract class AbstractLunarFrontController extends \Controller
             $newOrderStatus = $this->getConfigValue('capture_status_id');
             $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
                         . 'transaction ref: ' . $this->paymentIntentId 
-                        . "\r\n" . 'Captured amount: ' . $this->order['total']
-                        . ' (' . $this->order['currency_code'] . ')';
+                        . "\r\n" . 'Captured amount: ' . $apiResponse['amount']['decimal']
+                        . ' (' . $apiResponse['amount']['currency'] . ')';
             $successMessage = $this->language->get('success_message_captured');
         }
             
