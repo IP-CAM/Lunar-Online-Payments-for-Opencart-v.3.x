@@ -21,12 +21,9 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
      *******************************************************************************/
 
     /**
-     * Do Transaction On Order Status Change
-     *
-     * (here is the place that the event 'catalog/controller/api/order/history/after' can reach this function)
-     *
+     * (here is the place the event 'catalog/controller/api/order/history/after' can reach this function)
      */
-    public function doTransactionOnOrderStatusChange(&$route, &$args)
+    public function makeTransactionOnOrderStatusChange(&$route, &$args)
     {
         /** Load checkout order model. */
         $this->load->model('checkout/order');
@@ -77,24 +74,10 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
                 return;
             }
 
-            /**
-             * Make the transaction.
-             */
-            $this->transaction();
+            $resultArray = $this->execute();
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($resultArray));
         }
-    }
-
-    /**
-     * Make a transaction.
-     */
-    public function transaction()
-    {
-        $json = $this->transaction_validate();
-        if (! $json) {
-            $json = $this->execute();
-        }
-        $this->response->addHeader('Content-Type: application/json');
-        $this->response->setOutput(json_encode($json));
     }
 
     /**
@@ -281,79 +264,11 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
     }
 
     /**
-     * Validate the transaction inputs.
-     */
-    protected function transaction_validate()
-    {
-        $json = array();
-        $this->load->language(self::EXTENSION_PATH);
-
-        if (is_null($this->orderData->ref) || is_null($this->orderData->type) || is_null($this->orderData->amount)) {
-            $json['error'] = $this->language->get('error_transaction');
-
-            return $json;
-        }
-
-        if (! is_numeric($this->orderData->amount)) {
-            $json['error'] = $this->language->get('error_amount_format');
-
-            return $json;
-        }
-    }
-
-    /**
      * Get plugin store specific settings.
      */
     private function getSettingsData($storeId)
     {
         $this->load->model('setting/setting');
         return $this->model_setting_setting->getSetting('payment_lunar', $storeId);
-    }
-
-    /**
-     * Get formatted amount
-     */
-    private function getFormattedAmount($amount, $currency_code, $isMinor = false)
-    {
-        $exponent_zero  = array(
-            'BIF',
-            'BYR',
-            'DJF',
-            'GNF',
-            'JPY',
-            'KMF',
-            'KRW',
-            'PYG',
-            'RWF',
-            'VND',
-            'VUV',
-            'XAF',
-            'XOF',
-            'XPF'
-        );
-        $exponent_three = array( 'BHD', 'IQD', 'JOD', 'KWD', 'OMR', 'TND' );
-        $exponent       = 2;
-        if (in_array($currency_code, $exponent_zero)) {
-            $exponent = 0;
-        } elseif (in_array($currency_code, $exponent_three)) {
-            $exponent = 3;
-        }
-
-        $multiplier = pow(10, $exponent);
-        $formattedAmount     = array();
-
-        $symbol_left  = $this->currency->getSymbolLeft($currency_code);
-        $symbol_right = $this->currency->getSymbolRight($currency_code);
-
-        if ($isMinor) {
-            $formattedAmount['string'] = (string) ( $amount );
-        } else {
-            $formattedAmount['string'] = (string) ( $amount * $multiplier );
-        }
-        $formattedAmount['in_minor']           = (int) $formattedAmount['string'];
-        $formattedAmount['converted'] = $formattedAmount['in_minor'] / $multiplier;
-        $formattedAmount['formatted'] = $symbol_left . number_format($formattedAmount['converted'], $exponent, $this->language->get('decimal_point'), $this->language->get('thousand_point')) . $symbol_right;
-
-        return $formattedAmount;
     }
 }

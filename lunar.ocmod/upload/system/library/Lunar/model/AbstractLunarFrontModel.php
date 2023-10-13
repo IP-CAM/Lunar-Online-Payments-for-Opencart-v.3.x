@@ -12,7 +12,7 @@ abstract class AbstractLunarFrontModel extends \Model
      */
     public function getMethod($address, $total)
     {
-        $status = $this->getConfigValue('status');
+        $status = $this->getConfigValue('status') == 1;
 
         $query = $this->db->query("SELECT * 
                                     FROM " . DB_PREFIX . "zone_to_geo_zone 

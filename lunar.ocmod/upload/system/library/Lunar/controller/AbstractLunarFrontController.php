@@ -47,6 +47,12 @@ abstract class AbstractLunarFrontController extends \Controller
 
         $this->order = $this->model_checkout_order->getOrder($this->orderId);
 
+        if (!$this->order) {
+            $this->writeLog('No order found');
+            $this->session->data['error_warning'] = $this->language->get('error_no_order_found');;
+            $this->response->redirect($this->url->link('checkout/checkout'));
+        }
+
         $this->isInstantMode = 'instant' == $this->getConfigValue('capture_mode');
 
         $this->testMode = 'test' == $this->getConfigValue('api_mode');
@@ -68,9 +74,10 @@ abstract class AbstractLunarFrontController extends \Controller
     public function index()
     {
         $data['button_confirm'] = $this->language->get('button_confirm');
+        $data['methodCode'] = $this->paymentMethodCode;
         $data['paymentRedirectUrl'] = $this->url->link(static::EXTENSION_PATH . '/redirect');
 
-        return $this->load->view('extension/payment/lunar', $data);
+        $this->response->setOutput($this->load->view(static::EXTENSION_PATH, $data));
     }
 
     /**
@@ -92,7 +99,7 @@ abstract class AbstractLunarFrontController extends \Controller
         $this->savePaymentIntentOnTransaction();
 
         $redirectUrl = self::REMOTE_URL . $this->paymentIntentId;
-        if(isset($this->args['test'])) {
+        if($this->testMode) {
             $redirectUrl = self::TEST_REMOTE_URL . $this->paymentIntentId;
         }
 
@@ -250,7 +257,7 @@ abstract class AbstractLunarFrontController extends \Controller
     }
 
     /**
-     * 
+     * @TODO maybe also use "$this->db->escape" on values to be inserted
      */
     private function savePaymentIntentOnTransaction()
     {

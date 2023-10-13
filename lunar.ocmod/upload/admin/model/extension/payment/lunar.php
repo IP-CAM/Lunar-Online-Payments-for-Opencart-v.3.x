@@ -32,13 +32,13 @@ class ModelExtensionPaymentLunar extends Model
         $this->load->model('setting/event');
 
         /** Check if event is in database 'event' table (the result of getEventByCode is an array). */
-        if(empty($this->model_setting_event->getEventByCode('lunar_do_transaction_on_order_status_change'))) {
+        if(empty($this->model_setting_event->getEventByCode('lunar_transaction_on_order_status_change'))) {
             /** Make sure that the event is introduce only once in DB. */
             /** addEvent($code, $trigger, $action, $status = 1, $sort_order = 0); */
             $this->model_setting_event->addEvent(
-                'lunar_do_transaction_on_order_status_change',
+                'lunar_transaction_on_order_status_change',
                 'catalog/controller/api/order/history/after',
-                'extension/payment/lunar_transaction/doTransactionOnOrderStatusChange'
+                'extension/payment/lunar_transaction/makeTransactionOnOrderStatusChange'
             );
         }
     }
@@ -47,7 +47,7 @@ class ModelExtensionPaymentLunar extends Model
     {
         $this->load->model('setting/event');
         /** deleteEventByCode($code); */
-        $this->model_setting_event->deleteEventByCode('lunar_do_transaction_on_order_status_change');
+        $this->model_setting_event->deleteEventByCode('lunar_transaction_on_order_status_change');
     }
 
     public function getCcLogos()
