@@ -196,7 +196,7 @@
                                 </div>
                             </div>
 
-                            {% if 'mobilePay' == methodCode %}
+                            {% if configuration_id %}
                             <div class="form-group required">
                                 <label class="col-sm-2 control-label" for="configuration_id"><span
                                             data-toggle="tooltip"
@@ -255,7 +255,7 @@
                                 </div>
                             </div>
 
-                            {% if 'card' == methodCode %}
+                            {% if checkout_cc_logo %}
                             <div class="form-group">
                                 <label class="col-sm-2 control-label"><span data-toggle="tooltip"
                                             title="{{ help_checkout_cc_logo }}">{{ entry_checkout_cc_logo }}</span></label>

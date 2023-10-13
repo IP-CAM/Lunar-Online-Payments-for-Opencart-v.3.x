@@ -43,7 +43,6 @@ abstract class AbstractLunarAdminController extends \Controller
 
         $data['stores'] = $this->getAllStoresAsArray();
 
-        $data['methodCode'] = $this->paymentMethodCode;
         $data['plugin_version'] = $this->pluginVersion;
         
         $this->setAdminTexts($data);
@@ -67,11 +66,9 @@ abstract class AbstractLunarAdminController extends \Controller
             'public_key_live' => null,
             'capture_mode' => 'delayed',
             'logo_url' => null,
-            'configuration_id' => null,
             'method_title' => $this->language->get('default_method_title'),
             'shop_title' => $this->config->get('config_meta_title'),
             'description' => null,
-            'checkout_cc_logo' => $this->language->get('default_checkout_cc_logo'),
             'authorize_status_id' => 1,
             'capture_status_id' => 5,
             'refund_status_id' => 11,
@@ -82,6 +79,15 @@ abstract class AbstractLunarAdminController extends \Controller
             'geo_zone' => null,
             'sort_order' => 0,
         ]);
+
+
+        $this->paymentMethodCode == 'card' ? $this->setPostOrSettingValue($data, [
+            'checkout_cc_logo' => $this->language->get('default_checkout_cc_logo'),
+        ]) : null;
+        $this->paymentMethodCode == 'mobilePay' ? $this->setPostOrSettingValue($data, [
+            'configuration_id' => null,
+        ]) : null;
+        
         
         $data['debugMode'] = isset($this->request->get['debug']) || ($this->getSettingValue('api_mode') == 'test');
 
@@ -335,12 +341,12 @@ abstract class AbstractLunarAdminController extends \Controller
         }
 
         $this->model_setting_setting->editSetting($this->paymentMethodConfigCode, $updatedData, $selectedStoreId);
-        $redirect_url = $this->url->link(static::EXTENSION_PATH, 'store_id=' . $selectedStoreId . '&' . $this->oc_token . '&type=payment', true);
-
+        
         $this->setDisabledStatusOnOtherStores();
-
+        
         $this->session->data['success'] = $this->language->get('text_success');
-
+        
+        $redirect_url = $this->url->link(static::EXTENSION_PATH, 'store_id=' . $selectedStoreId . '&' . $this->oc_token . '&type=payment', true);
         $this->response->redirect($redirect_url);
     }
 
