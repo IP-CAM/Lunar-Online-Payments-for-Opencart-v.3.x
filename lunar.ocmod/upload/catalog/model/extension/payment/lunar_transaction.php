@@ -39,7 +39,7 @@ class ModelExtensionPaymentLunarTransaction extends Model
                                 order_amount = '" . $data['order_amount'] . "',
                                 transaction_amount = '" . $data['transaction_amount'] . "',
                                 history = '" . $data['history'] . "',
-                                date_added = " . $data['date_added'] // date_added is a SQL function
+                                date_added = NOW()"
                         );
     }
 

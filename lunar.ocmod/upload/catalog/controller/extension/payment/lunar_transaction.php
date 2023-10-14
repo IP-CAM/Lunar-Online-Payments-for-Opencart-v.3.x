@@ -1,20 +1,66 @@
 <?php
 
-require_once(DIR_SYSTEM . 'library/Lunar/Client.php');
-require_once(DIR_SYSTEM . 'library/Lunar/Transaction.php');
+require_once(DIR_SYSTEM . 'library/Lunar/vendor/autoload.php');
 
-use Lunar\Client;
-use Lunar\Transaction;
 
-class ControllerExtensionPaymentLunarTransaction extends Controller
+use Lunar\Lunar as ApiClient;
+use Lunar\Exception\ApiException;
+
+/**
+ * 
+ */
+class ControllerExtensionPaymentLunarTransaction extends \Controller
 {
-    const EXTENSION_PATH = 'extension/payment/lunar';
-    const THIS_MODEL_PATH = 'extension/payment/lunar_transaction';
+    const MODEL_PATH = 'extension/payment/lunar_transaction';
+    const LUNAR_METHODS = [
+        'lunar_card',
+        'lunar_mobilepay',
+    ];
 
-    public function index()
-    {
-    }
+    /** @var int|string|null */
+    private $orderId;
 
+    private $logger;
+    private bool $testMode;
+    private string $storeId;
+
+    public function index() {}
+
+    public function __construct($registry) {
+		parent::__construct($registry);
+
+        $this->load->language('extension/payment/lunar');
+        $this->load->model(self::MODEL_PATH);
+        $this->load->model('checkout/order');
+        $this->load->model('setting/setting');
+        
+        $this->orderId = $this->request->get['order_id'];
+        
+        $this->order = $this->model_checkout_order->getOrder($this->orderId);
+
+        if (!$this->order) {
+            $this->writeLog('No order found with ID: ' . $this->orderId);
+            $this->session->data['error_warning'] = $this->language->get('error_no_order_found');
+        }
+
+        if (!in_array($this->order['payment_code'], self::LUNAR_METHODS)) {
+            return;
+        }
+
+        $this->storeId = $this->order['store_id'];
+
+        $this->logger = new Log($this->order['payment_code'] . '.log');
+
+        $this->testMode = 'test' == $this->getSettingValue('api_mode');
+        if ($this->testMode) {
+            $privateKey =  $this->getSettingValue('app_key_test');
+        } else {
+            $privateKey = $this->getSettingValue('app_key_live');
+        }
+
+        /** API Client instance */
+        $this->lunarApiClient = new ApiClient($privateKey, null, $this->testMode);
+	}
 
     /*******************************************************************************
      ********************* LOGIC USED IN ADMIN BACKEND  ****************************
@@ -25,59 +71,9 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
      */
     public function makeTransactionOnOrderStatusChange(&$route, &$args)
     {
-        /** Load checkout order model. */
-        $this->load->model('checkout/order');
-
-        /** Load language */
-        $this->load->language(self::EXTENSION_PATH);
-
-        /**
-         * Check if order ID is present and extract order by ID.
-         *
-         */
-        if (isset($_GET['order_id']) && $order = $this->model_checkout_order->getOrder($_GET['order_id'])) {
-
-            if ('lunar' != $order['payment_code']) {
-                return;
-            }
-
-            /**
-             * Extract last transaction for current order.
-             * - load transaction model
-             * - get last transaction
-             */
-            $this->load->model(self::THIS_MODEL_PATH);
-            $lastTransaction = $this->model_extension_payment_lunar_transaction->getLastTransaction($order['order_id']);
-
-            /**
-             * Create new Std object to be used in execute() method bellow.
-             */
-            $this->orderData = new StdClass();
-
-            $this->orderData->order_store_id = $order['store_id'];
-            $this->orderData->order_id = $order['order_id'];
-            $this->orderData->ref = $lastTransaction['transaction_id'];
-            $this->orderData->amount = $order['total'];
-
-            /** Check type of transaction. */
-            if ($order['order_status_id'] === $this->config->get('payment_lunar_capture_status_id')) {
-                $this->orderData->type = 'Capture';
-
-            } elseif ($order['order_status_id'] === $this->config->get('payment_lunar_refund_status_id')) {
-                $this->orderData->type = 'Refund';
-
-            } elseif ($order['order_status_id'] === $this->config->get('payment_lunar_cancel_status_id')) {
-                $this->orderData->type = 'Cancel';
-
-            } else {
-                /** Return that no other status is available for transaction. */
-                return;
-            }
-
-            $resultArray = $this->execute();
-            $this->response->addHeader('Content-Type: application/json');
-            $this->response->setOutput(json_encode($resultArray));
-        }
+        $resultArray = $this->execute();
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($resultArray));
     }
 
     /**
@@ -85,190 +81,105 @@ class ControllerExtensionPaymentLunarTransaction extends Controller
      */
     public function execute()
     {
-        $this->load->language(self::EXTENSION_PATH);
+        $lastTransaction = $this->model_extension_payment_lunar_transaction->getLastTransaction($this->orderId);
 
-        $this->load->model(self::THIS_MODEL_PATH);
-
-        $this->logger = new Log('lunar.log');
-        $log = $this->config->get('payment_lunar_logging') ? true : false;
-
-        $orderStoreId = $this->orderData->order_store_id;
-        $orderId      = $this->orderData->order_id;
-        $ref          = $this->orderData->ref;
-        $type         = $this->orderData->type;
-        $input_amount = $this->orderData->amount;
-
-        $history = $this->model_extension_payment_lunar_transaction->getLastTransaction($orderId);
-        $history['transaction_currency'] = strtoupper($history['transaction_currency']);
-
-        if (is_null($history)) {
-            $json['error'] = $this->language->get('error_transaction_error_returned');
-
-            return $json;
+        if (!$lastTransaction) {
+            return ['error' => $this->language->get('error_empty_transaction_result')];
         }
 
-        $formattedAmount = $this->getFormattedAmount($input_amount, $history['transaction_currency']);
+        $paymentIntentId = $lastTransaction['transaction_id'];
+        $currency = $lastTransaction['transaction_currency'];
+        $amount = $lastTransaction['transaction_amount'];
 
-        if ($log) {
-            $this->logger->write('*****************************');
-            $this->logger->write('Admin transaction ' . $type . ' for order: ' . $history['order_id'] . ' (' . $formattedAmount['formatted'] . ' ' . $history['transaction_currency'] . ')');
-            $this->logger->write('Transaction Reference: ' . $ref);
-        }
+        $this->writeLog('************* admin ****************');
+        $this->writeLog('Admin transaction for order: ' . $this->orderId . ' (' . $amount . ' ' . $currency . ')');
+        $this->writeLog('Transaction Reference: ' . $paymentIntentId);
+        
+        try {
+            $fetchedTransaction = $this->lunarApiClient->payments()->fetch($paymentIntentId);
 
-
-        $pluginSettingsData = $this->getSettingsData($orderStoreId);
-        $app_key = $pluginSettingsData['payment_lunar_api_mode'] == 'live' ?
-                    $pluginSettingsData['payment_lunar_app_key_live'] :
-                    $pluginSettingsData['payment_lunar_app_key_test'];
-
-        Client::setKey($app_key);
-        $trans_data = Transaction::fetch($ref);
-
-        if (is_null($trans_data)) {
-            $this->logger->write('Invalid transaction data. Unable to Fetch transaction.');
-            $json['error'] = $this->language->get('error_message');
-
-            return $json;
-        }
-
-        if ($trans_data['transaction']['currency'] != $history['transaction_currency']) {
-            if ($log) {
-                $this->logger->write('Error: Capture currency (' . $history['transaction_currency'] . ') not equal to Transaction currency (' . $trans_data['transaction']['currency'] . '). Transaction aborted!');
+            if (!$fetchedTransaction) {
+                $this->writeLog('Unable to Fetch transaction for intent ID: ' . $paymentIntentId);
+                return ['error' => $this->language->get('error_empty_transaction_result')];
             }
-            $json['error'] = $this->language->get('error_transaction_currency');
-            ;
 
-            return $json;
-        }
-
-        $response = array();
-
-        /** Verify which transaction type is. */
-        switch ($type) {
-
-            case "Capture":
-                if ($trans_data['transaction']['pendingAmount'] == 0) {
-                    if ($log) {
-                        $this->logger->write('Error: There is no Pending amount. Order is already captured. Transaction aborted.');
-                    }
-                    $json['error'] = $this->language->get('error_order_captured');
-                    ;
-
-                    return $json;
-                }
-
-                if ($trans_data['transaction']['pendingAmount'] < $formattedAmount['in_minor']) {
-                    if ($log) {
-                        $this->logger->write('Warning: Capture amount is large than Transaction pending amount. Pending amount will be captured.');
-                    }
-                    $formattedAmount = $this->getFormattedAmount($trans_data['transaction']['pendingAmount'], $history['transaction_currency'], true);
-                }
-
-                $data = array(
-                    'amount'     => $formattedAmount['in_minor'],
-                    'descriptor' => '',
-                    'currency'   => $history['transaction_currency']
-                );
-
-                /** CAPTURE the order amount. */
-                $response = Transaction::capture($ref, $data);
-
-                break;
-
-            case "Refund":
-                if ($trans_data['transaction']['capturedAmount'] == 0) {
-                    if ($log) {
-                        $this->logger->write('Error: There is no Captured amount. Order is not captured and cannot be refunded. Transaction aborted.');
-                    }
-                    $json['error'] = $this->language->get('error_refund_before_capture');
-                    ;
-
-                    return $json;
-                }
-                if ($trans_data['transaction']['capturedAmount'] < $formattedAmount['in_minor']) {
-                    if ($log) {
-                        $this->logger->write('Warning: Refund amount is larger than Transaction captured amount. Captured amount will be refunded.');
-                    }
-                    $formattedAmount = $this->getFormattedAmount($trans_data['transaction']['capturedAmount'], $history['transaction_currency'], true);
-                }
-                $data = array(
-                    'amount'     => $formattedAmount['in_minor'],
-                    'descriptor' => ''
-                );
-
-                /** REFUND the order amount. */
-                $response = Transaction::refund($ref, $data);
-
-                break;
-
-            case "Cancel":
-                if ($trans_data['transaction']['capturedAmount'] > 0) {
-                    if ($log) {
-                        $this->logger->write('Error: Order already Captured and cannot be Cancelled. Transaction aborted.');
-                    }
-                    $json['error'] = $this->language->get('error_cancel_after_capture');
-                    ;
-
-                    return $json;
-                }
-                if ($trans_data['transaction']['pendingAmount'] < $formattedAmount['in_minor']) {
-                    if ($log) {
-                        $this->logger->write('Warning: Cancel amount is larger than Transaction captured amount. Captured amount will be cancelled.');
-                    }
-                    $formattedAmount = $this->getFormattedAmount($trans_data['transaction']['pendingAmount'], $history['transaction_currency'], true);
-                }
-
-                $data = array(
-                    'amount' => $formattedAmount['in_minor'],
-                );
-
-                /** CANCEL the order amount. */
-                $response = Transaction::void($ref, $data);
-                break;
-        }
-
-        if (isset($response['transaction'])) {
-            $data = array(
-                'order_id'             => $history['order_id'],
-                'transaction_id'       => $ref,
-                'transaction_type'     => $type,
-                'transaction_currency' => $history['transaction_currency'],
-                'order_amount'         => $history['order_amount'],
-                'transaction_amount'   => $formattedAmount['formatted'],
-                'history'              => '0',
-                'date_added'           => 'NOW()'
-            );
-
-            /** Add transaction. */
-            $this->model_extension_payment_lunar_transaction->addTransaction($data);
-
-            $new_order_status_id = $this->config->get('payment_lunar_' . strtolower($type) . '_status_id');
-
-            /** Update order history. */
-            $this->model_extension_payment_lunar_transaction->updateOrder($data, $new_order_status_id);
-
-            $json['success'] = sprintf($this->language->get('success_transaction_' . strtolower($type)), $formattedAmount['formatted']) . ' ' . $history['transaction_currency'];
-
-            return $json;
-
-        } else {
-            $error = array();
-            foreach ($response as $field_error) {
-                $error[] = ucwords($field_error['field']) . ': ' . $field_error['message'];
+            if ($fetchedTransaction['amount']['currency'] != $lastTransaction['transaction_currency']) {
+                $this->writeLog('Error: Capture currency (' . $currency . ') not equal to Transaction currency (' . $fetchedTransaction['transaction']['currency'] . '). Transaction aborted!');
+                return ['error' => $this->language->get('error_transaction_currency')];
             }
-            $error_message = implode(" ", $error);
-            $json['error'] = $this->language->get('error_transaction_error_returned') . ' ' . $error_message;
 
-            return $json;
+            $data = [
+                'amount' => [
+                    'currency' => $currency,
+                    'decimal' => $amount,
+                ]
+            ];
+
+            $actionType = '';
+            $response = [];
+
+
+            switch ($this->order['order_status_id']) {
+                case $this->getSettingValue('capture_status_id'):
+                    $actionType = 'capture';
+                    $response = $this->lunarApiClient->payments()->capture($paymentIntentId, $data);
+                    break;
+    
+                case $this->getSettingValue('refund_status_id'):
+                    $actionType = 'refund';
+                    $response = $this->lunarApiClient->payments()->refund($paymentIntentId, $data);
+                    break;
+    
+                case $this->getSettingValue('cancel_status_id'):
+                    $actionType = 'cancel';
+                    $response = $this->lunarApiClient->payments()->cancel($paymentIntentId, $data);
+                    break;
+            }
+        } catch (ApiException $e) {
+            $this->writeLog('API Exception: ' . $e->getMessage());
+            return ['error' => $e->getMessage()];
         }
+
+        if (isset($response["{$actionType}State"]) && 'completed' != $response["{$actionType}State"]) {
+            $errorMessage = $this->language->get('error_message');
+            if ($response['declinedReason'] ?? null) {
+                $errorMessage = $response['declinedReason'];
+                $this->writeLog('Declined transaction: ' . $errorMessage);
+            }
+            return ['error' => $errorMessage];
+        }
+
+        $dataForDB = [
+            'order_id'             => $this->orderId,
+            'transaction_id'       => $paymentIntentId,
+            'transaction_type'     => $actionType,
+            'transaction_currency' => $currency,
+            'order_amount'         => $lastTransaction['order_amount'],
+            'transaction_amount'   => $amount,
+            'history'              => '0',
+        ];
+
+        $this->model_extension_payment_lunar_transaction->addTransaction($dataForDB);
+        $this->model_extension_payment_lunar_transaction->updateOrder($dataForDB, $this->order['order_status_id']);
+
+        return ['success' => sprintf($this->language->get("success_transaction_{$actionType}"), $amount) . ' ' . $currency];
     }
 
     /**
-     * Get plugin store specific settings.
+     * @return mixed
      */
-    private function getSettingsData($storeId)
+    private function getSettingValue($key)
     {
-        $this->load->model('setting/setting');
-        return $this->model_setting_setting->getSetting('payment_lunar', $storeId);
+        return $this->model_setting_setting->getSettingValue('payment_' . $this->paymentMethod . '_' . $key, $this->storeId);
+    }
+    
+    /**
+     * 
+     */
+    private function writeLog($logMessage)
+    {
+        if ($this->getSettingValue('logging')) {
+            $this->logger->write($logMessage);
+        }
     }
 }
