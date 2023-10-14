@@ -8,6 +8,7 @@ use Lunar\Lunar as ApiClient;
 abstract class AbstractLunarAdminController extends \Controller
 {
     const EXTENSION_PATH = '';
+    const ADMIN_GENERAL_PATH = 'extension/payment/lunar';
 
     protected $error = array();
     protected $oc_token = '';
@@ -26,7 +27,7 @@ abstract class AbstractLunarAdminController extends \Controller
         $this->oc_token = 'user_token=' . $this->session->data['user_token'];
         $this->load->language(static::EXTENSION_PATH);
         $this->load->model('tool/image');
-        $this->load->model('extension/payment/lunar');
+        $this->load->model(self::ADMIN_GENERAL_PATH);
         $this->load->model('setting/setting');
 
         $this->pluginVersion = json_decode(file_get_contents(dirname(__DIR__) . '/composer.json'))->version;
@@ -93,13 +94,13 @@ abstract class AbstractLunarAdminController extends \Controller
 
         $this->maybeSetAlertMessages($data);
 
-        $this->response->setOutput($this->load->view('extension/payment/lunar', $data));
+        $this->response->setOutput($this->load->view(self::ADMIN_GENERAL_PATH, $data));
     }
 
     /**
      * @return mixed
      */
-    protected function getSettingValue($key)
+    private function getSettingValue($key)
     {
         return $this->model_setting_setting->getSettingValue($this->paymentMethodConfigCode . '_' . $key, $this->storeId);
     }
@@ -429,7 +430,7 @@ abstract class AbstractLunarAdminController extends \Controller
       *
       * @return string - the error message
       */
-    protected function validatePublicKeyField($value, $mode) {
+    private function validatePublicKeyField($value, $mode) {
         /** Check if the key value is not empty **/
         if ( ! $value ) {
             return sprintf($this->language->get('error_public_key'),$mode);
@@ -443,6 +444,9 @@ abstract class AbstractLunarAdminController extends \Controller
         }
     }
 
+    /**
+     * 
+     */
     private function setAdminTexts(&$data)
     {
         $data['ccLogos'] = $this->model_extension_payment_lunar->getCcLogos();
@@ -540,7 +544,7 @@ abstract class AbstractLunarAdminController extends \Controller
     /**
      * 
      */
-	public function setTexts(&$data, $textKeys)
+	private function setTexts(&$data, $textKeys)
     {
         foreach ($textKeys as $textKey) {
             $data[$textKey] = $this->language->get($textKey);
@@ -553,7 +557,7 @@ abstract class AbstractLunarAdminController extends \Controller
 	public function install()
     {
 		if ($this->user->hasPermission('modify', 'marketplace/extension')) {
-			$this->load->model('extension/payment/lunar');
+			$this->load->model(self::ADMIN_GENERAL_PATH);
 
             $this->model_extension_payment_lunar->install();
 		}
@@ -565,7 +569,7 @@ abstract class AbstractLunarAdminController extends \Controller
 	public function uninstall()
     {
 		if ($this->user->hasPermission('modify', 'marketplace/extension')) {
-			$this->load->model('extension/payment/lunar');
+			$this->load->model(self::ADMIN_GENERAL_PATH);
 
             $this->model_extension_payment_lunar->uninstall();
 		}
