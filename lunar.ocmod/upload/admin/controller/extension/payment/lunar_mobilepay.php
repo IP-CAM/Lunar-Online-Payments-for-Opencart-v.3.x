@@ -11,5 +11,5 @@ class ControllerExtensionPaymentLunarMobilePay extends AbstractLunarAdminControl
 
     public string $paymentMethodCode = 'mobilePay';
     
-    public string $paymentMethodConfigCode = 'payment_lunar_mobilePay';
+    public string $paymentMethodConfigCode = 'payment_lunar_mobilepay';
 }

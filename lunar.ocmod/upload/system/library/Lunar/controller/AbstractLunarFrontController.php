@@ -17,6 +17,7 @@ abstract class AbstractLunarFrontController extends \Controller
     const LUNAR_DB_TABLE = DB_PREFIX . 'lunar_transaction';
 
     protected string $paymentMethodCode = '';
+    protected string $paymentMethodConfigCode = '';
 
     protected ApiClient $lunarApiClient;
 
@@ -77,7 +78,7 @@ abstract class AbstractLunarFrontController extends \Controller
         $data['methodCode'] = $this->paymentMethodCode;
         $data['paymentRedirectUrl'] = $this->url->link(static::EXTENSION_PATH . '/redirect');
 
-        $this->response->setOutput($this->load->view(static::EXTENSION_PATH, $data));
+        return $this->load->view('extension/payment/lunar', $data);
     }
 
     /**
@@ -367,7 +368,7 @@ abstract class AbstractLunarFrontController extends \Controller
      */
     private function getConfigValue($configKey)
     {
-        return $this->config->get('payment_lunar_' . $this->paymentMethodCode  . '_' . $configKey);
+        return $this->config->get($this->paymentMethodConfigCode  . '_' . $configKey);
     }
 
     /**

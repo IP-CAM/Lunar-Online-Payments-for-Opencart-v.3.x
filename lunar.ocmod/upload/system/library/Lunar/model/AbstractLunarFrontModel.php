@@ -6,6 +6,7 @@
 abstract class AbstractLunarFrontModel extends \Model
 {
     protected string $paymentMethodCode = '';
+    protected string $paymentMethodConfigCode = '';
     
     /**
      * 
@@ -54,7 +55,7 @@ abstract class AbstractLunarFrontModel extends \Model
         }
 
         return [
-            'code'       => 'lunar_' . $this->paymentMethodCode,
+            'code'       => 'lunar_' . strtolower($this->paymentMethodCode),
             'title'      => $this->getConfigValue('method_title'),
             'terms'      => $logos_string,
             'sort_order' => $this->getConfigValue('sort_order')
@@ -66,6 +67,6 @@ abstract class AbstractLunarFrontModel extends \Model
      */
     protected function getConfigValue($configKey)
     {
-        return $this->config->get('payment_lunar_' . $this->paymentMethodCode  . '_' . $configKey);
+        return $this->config->get($this->paymentMethodConfigCode  . '_' . $configKey);
     }
 }

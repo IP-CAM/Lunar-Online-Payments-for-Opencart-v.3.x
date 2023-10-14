@@ -360,16 +360,16 @@ abstract class AbstractLunarAdminController extends \Controller
     {
         $allStores = $this->getAllStoresAsArray();
 
-        $pluginStatusStringKey = $this->paymentMethodConfigCode . '_status';
+        $statusKey = $this->paymentMethodConfigCode . '_status';
 
         foreach ($allStores as $store) {
 
             /** Get all store settings by store id. */
-            $storePluginSettings = $this->model_setting_setting->getSetting($this->paymentMethodConfigCode, $store['store_id']);
+            $storePaymentMethodSettings = $this->model_setting_setting->getSetting($this->paymentMethodConfigCode, $store['store_id']);
 
             /** Check if status setting is not set, then set it on 0 (= disabled). */
-            if (!isset($storePluginSettings[$pluginStatusStringKey])) {
-                $this->model_setting_setting->editSetting($this->paymentMethodConfigCode, [$pluginStatusStringKey => 0], $store['store_id']);
+            if (!isset($storePaymentMethodSettings[$statusKey])) {
+                $this->model_setting_setting->editSetting($this->paymentMethodConfigCode, [$statusKey => 0], $store['store_id']);
             }
         }
     }
