@@ -65,5 +65,8 @@ Under the extension settings, you can:
 
 ## Changelog
 
+#### 2.0.0:
+* Changed flow to hosted checkout + Added MobilePay payment method
+
 #### 1.0.0:
 * Initial version
