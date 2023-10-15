@@ -11,12 +11,14 @@
     ),
     'versions' => array(
         'lunar/payments-api-sdk' => array(
-            'pretty_version' => 'dev-initial-dev',
-            'version' => 'dev-initial-dev',
-            'reference' => 'd2e8125edf8225ce613a61f59c248b5a088a7d51',
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '36436f5181dbeb0fdb3bd77b6c040c7a7abcc366',
             'type' => 'library',
             'install_path' => __DIR__ . '/../lunar/payments-api-sdk',
-            'aliases' => array(),
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
             'dev_requirement' => false,
         ),
         'lunar/plugin-opencart-3' => array(

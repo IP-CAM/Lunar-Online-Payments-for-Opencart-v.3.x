@@ -10,12 +10,6 @@
     }
   ],
   "require": {
-    "lunar/payments-api-sdk": "dev-initial-dev"
-  },
-  "repositories": [
-    {
-        "type": "vcs",
-        "url": "https://github.com/lunar/payments-api-sdk"
-    }
-  ]
+    "lunar/payments-api-sdk": "dev-master"
+  }
 }
