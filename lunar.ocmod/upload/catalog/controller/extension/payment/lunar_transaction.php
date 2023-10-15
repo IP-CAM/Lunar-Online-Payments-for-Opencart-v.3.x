@@ -17,6 +17,8 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
         'lunar_mobilepay',
     ];
 
+    private ApiClient $lunarApiClient;
+
     /** @var int|string|null */
     private $orderId;
 

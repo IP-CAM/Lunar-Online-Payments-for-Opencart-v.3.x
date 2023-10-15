@@ -179,7 +179,7 @@ abstract class AbstractLunarFrontController extends \Controller
             $transactionType = 'capture';
             $newOrderStatus = $this->getConfigValue('capture_status_id');
             $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
-                        . 'transaction ref: ' . $this->paymentIntentId 
+                        . ' transaction ref: ' . $this->paymentIntentId 
                         . "\r\n" . 'Captured amount: ' . $apiResponse['amount']['decimal']
                         . ' (' . $apiResponse['amount']['currency'] . ')';
             $successMessage = $this->language->get('success_message_captured');

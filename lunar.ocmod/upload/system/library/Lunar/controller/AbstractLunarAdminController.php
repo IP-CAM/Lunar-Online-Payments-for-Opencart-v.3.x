@@ -70,10 +70,10 @@ abstract class AbstractLunarAdminController extends \Controller
             'method_title' => $this->language->get('default_method_title'),
             'shop_title' => $this->config->get('config_meta_title'),
             'description' => null,
-            'authorize_status_id' => 1,
-            'capture_status_id' => 5,
-            'refund_status_id' => 11,
-            'cancel_status_id' => 16,
+            'authorize_status_id' => 1, // pending
+            'capture_status_id' => 5, // complete
+            'refund_status_id' => 11, // refunded
+            'cancel_status_id' => 9, // canceled reversal
             'status' => null,
             'logging' => null,
             'minimum_total' => 0,
