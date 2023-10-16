@@ -140,6 +140,9 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
         } catch (ApiException $e) {
             $this->writeLog('API Exception: ' . $e->getMessage());
             return ['error' => $e->getMessage()];
+        } catch (\Exception $e) {
+            $this->writeLog('General Exception: ' . $e->getMessage());
+            return ['error' => $e->getMessage()];
         }
 
         if (isset($response["{$actionType}State"]) && 'completed' != $response["{$actionType}State"]) {
