@@ -150,7 +150,7 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
         if (isset($response["{$actionType}State"]) && 'completed' != $response["{$actionType}State"]) {
             $errorMessage = $this->language->get('error_message');
             if ($response['declinedReason'] ?? null) {
-                $errorMessage = $response['declinedReason']['error'] ?? json_encode($errorMessage);
+                $errorMessage = $response['declinedReason']['error'] ?? json_encode($response);
                 $this->writeLog('Declined transaction: ' . $errorMessage);
             }
             return ['error' => $errorMessage];

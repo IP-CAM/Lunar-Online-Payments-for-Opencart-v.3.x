@@ -21,6 +21,7 @@ abstract class AbstractLunarFrontController extends \Controller
 
     protected ApiClient $lunarApiClient;
 
+    protected string $error = '';
     protected bool $testMode = false;
     protected bool $isInstantMode = false;
     protected array $args = [];
@@ -50,9 +51,8 @@ abstract class AbstractLunarFrontController extends \Controller
         $this->order = $this->model_checkout_order->getOrder($this->orderId);
 
         if (!$this->order) {
-            $this->writeLog('No order found');
-            $this->session->data['error_warning'] = $this->language->get('error_no_order_found');;
-            $this->response->redirect($this->url->link('checkout/checkout'));
+            $this->writeLog('No order found: ID ' . $this->orderId, true);
+            $this->error = $this->language->get('error_no_order_found');
         }
 
         $this->isInstantMode = 'instant' == $this->getConfigValue('capture_mode');
@@ -73,6 +73,7 @@ abstract class AbstractLunarFrontController extends \Controller
         $data['button_confirm'] = $this->language->get('button_confirm');
         $data['methodCode'] = $this->paymentMethodCode;
         $data['paymentRedirectUrl'] = $this->url->link($this->extensionPath . '/redirect');
+        $data['error'] = $this->error;
 
         return $this->load->view(LunarHelper::LUNAR_GENERAL_PATH, $data);
     }
@@ -82,15 +83,22 @@ abstract class AbstractLunarFrontController extends \Controller
      */
     public function redirect()
     {
-       $this->setArgs();
+        $this->setArgs();
 
         $this->paymentIntentId = $this->getPaymentIntentFromTransaction($this->dbTransaction);
         if (!$this->paymentIntentId) {
-            $this->paymentIntentId = $this->lunarApiClient->payments()->create($this->args);
+            try {
+                $this->paymentIntentId = $this->lunarApiClient->payments()->create($this->args);
+            } catch (ApiException $e) {
+                $this->writeLog('Exception creating payment intent: ' . $e->getMessage());
+                $data['error'] = "An exception occurred! <br> Please refresh and try again or contact system administrator.";
+                return $this->sendJsonResponse($data);
+            }
         }
 
         if (empty($this->paymentIntentId)) {
-            $data['error'] = 'An error occurred creating payment intent for order. Please try again or contact system administrator.';
+            $data['error'] = "An error occurred creating payment intent for order. <br> Please try again or contact system administrator.";
+            return $this->sendJsonResponse($data);
         }
 
         $data = [
@@ -99,6 +107,7 @@ abstract class AbstractLunarFrontController extends \Controller
             'transaction_currency' => $this->order['currency_code'],
             'order_amount' => $this->order['total'],
         ];
+
         $this->savePaymentIntentOnTransaction($data);
 
         $redirectUrl = self::REMOTE_URL . $this->paymentIntentId;
@@ -108,8 +117,7 @@ abstract class AbstractLunarFrontController extends \Controller
 
         $data['redirect'] = $redirectUrl;
 
-        $this->response->addHeader('Content-Type: application/json');
-        $this->response->setOutput(json_encode($data));
+        $this->sendJsonResponse($data);
     }
 
     /**
@@ -122,9 +130,9 @@ abstract class AbstractLunarFrontController extends \Controller
         $this->paymentIntentId = $this->getPaymentIntentFromTransaction();
 
         if (! $this->paymentIntentId) {
-            $this->writeLog('No payment intent id found');
-            $this->session->data['error_warning'] = $this->language->get('error_no_transaction_found');;
-            $this->response->redirect($this->url->link('checkout/checkout'));
+            $this->writeLog('No payment intent id found for order: ID ' . $this->orderId, true);
+            $this->session->data['error'] = $this->language->get('error_no_transaction_found');
+            return $this->response->redirect($this->url->link('checkout/checkout'));
         }
 
         $this->writeLog('************');
@@ -137,7 +145,7 @@ abstract class AbstractLunarFrontController extends \Controller
             if (! $this->parseApiTransactionResponse($apiResponse)) {
                 $errorResponse = $this->getResponseError($apiResponse);
                 $this->writeLog('Api error response: ' . $errorResponse);
-                $this->session->data['error_warning'] = $errorResponse;
+                $this->session->data['error'] = $errorResponse;
                 $this->response->redirect($this->url->link('checkout/checkout'));
             }
 
@@ -162,10 +170,10 @@ abstract class AbstractLunarFrontController extends \Controller
                     $errorMessage = $this->language->get('error_transaction_not_captured');
 
                     if ($captureResponse['declinedReason'] ?? null) {
-                        $errorMessage = $captureResponse['declinedReason'];
-                        $this->writeLog('Declined transaction: ' . $errorMessage);
+                        $errorMessage = $captureResponse['declinedReason']['error'] ?? json_encode($captureResponse);
+                        $this->writeLog('Declined Lunar transaction: ' . $errorMessage, true);
                     }
-                    $this->session->data['error_warning'] =  $errorMessage;
+                    $this->session->data['error'] = $errorMessage;
                     $this->response->redirect($this->url->link('checkout/checkout'));
                 }
 
@@ -175,9 +183,9 @@ abstract class AbstractLunarFrontController extends \Controller
             }
 
         } catch (ApiException $e) {
-            $this->writeLog('Frontend API Exception: ' . $e->getMessage());
-            $this->session->data['error_warning'] = $e->getMessage();
-            $this->response->redirect($this->url->link('checkout/checkout'));
+            $this->writeLog('Frontend Lunar API Exception: ' . $e->getMessage(), true);
+            $this->session->data['error'] = $this->language->get('error_transaction_exception');
+            return $this->response->redirect($this->url->link('checkout/checkout'));
         }
             
         $transactionData = [
@@ -199,7 +207,6 @@ abstract class AbstractLunarFrontController extends \Controller
         $this->session->data['success'] = $successMessage;
         $this->response->redirect($this->url->link('checkout/success'));
     }
-
 
     /**
      * 
@@ -251,6 +258,15 @@ abstract class AbstractLunarFrontController extends \Controller
         if ($this->testMode) {
             $this->args['test'] = $this->getTestObject();
         }
+    }
+
+    /**
+     * 
+     */
+    private function sendJsonResponse($data)
+    {
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($data));
     }
 
     /**
@@ -345,11 +361,16 @@ abstract class AbstractLunarFrontController extends \Controller
     /**
      * 
      */
-    private function writeLog($logMessage)
+    private function writeLog($logMessage, $toErrorLog = false)
     {
         if ($this->getConfigValue('logging')) {
-            $this->logger->write($logMessage);
+            if ($toErrorLog) {
+                $this->log->write($logMessage);
+            } else {
+                $this->logger->write($logMessage);
+            }
         }
+
     }
 
     /**

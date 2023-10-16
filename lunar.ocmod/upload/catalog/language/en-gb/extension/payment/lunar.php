@@ -14,9 +14,9 @@ $_['button_confirm']              = 'Pay Now!';
 
 // Error
 $_['error_no_transaction_found']       = 'No transaction reference found';
-$_['error_no_order_found']             = 'No order found with provided id';
+$_['error_no_order_found']             = 'No order found with provided id. Please refresh and try again.';
 $_['error_invalid_transaction_data']   = 'Invalid transaction';
-$_['error_transaction_error_returned'] = 'Transaction error';
+$_['error_transaction_exception']      = 'An exception occurred! Please try again or contact system administrator.';
 $_['error_empty_transaction_result']   = 'Invalid transaction';
 $_['error_transaction_not_captured']   = 'Transaction authorized. Payment capture error!';
 $_['error_transaction']                = 'Error: Invalid Transaction data!';
