@@ -127,36 +127,37 @@ abstract class AbstractLunarFrontController extends \Controller
 
         $this->writeLog('************');
         $this->writeLog('Lunar callback. Transaction reference: ' . $this->paymentIntentId);
-
-        $apiResponse = $this->lunarApiClient->payments()->fetch($this->paymentIntentId);        
-
-        if (! $this->parseApiTransactionResponse($apiResponse)) {
-            $errorResponse = $this->getResponseError($apiResponse);
-            $this->writeLog('Api error response: ' . $errorResponse);
-            $this->session->data['error_warning'] = $errorResponse;
-            $this->response->redirect($this->url->link('checkout/checkout'));
-        }
-
-        $params = [
-            'amount' => [
-                'currency' => $this->order['currency_code'],
-                'decimal' => (string) $this->order['total'],
-            ]
-        ];
         
-        $this->writeLog(json_encode(['Callback payment params' => $params]));
+        try {
 
-        $transactionType = 'authorize';
-        $newOrderStatus = $this->getConfigValue('authorize_status_id');
-        $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
-                    . ' transaction ref: ' . $this->paymentIntentId 
-                    . "\r\n" . 'Authorized amount: ' . $apiResponse['amount']['decimal']
-                    . ' (' . $apiResponse['amount']['currency'] . ')';
-        $successMessage = $this->language->get('success_message_authorized');
-        
-        if ($this->isInstantMode) {
+            $apiResponse = $this->lunarApiClient->payments()->fetch($this->paymentIntentId);        
 
-            try {
+            if (! $this->parseApiTransactionResponse($apiResponse)) {
+                $errorResponse = $this->getResponseError($apiResponse);
+                $this->writeLog('Api error response: ' . $errorResponse);
+                $this->session->data['error_warning'] = $errorResponse;
+                $this->response->redirect($this->url->link('checkout/checkout'));
+            }
+
+            $params = [
+                'amount' => [
+                    'currency' => $this->order['currency_code'],
+                    'decimal' => (string) $this->order['total'],
+                ]
+            ];
+            
+            $this->writeLog(json_encode(['Callback payment params' => $params]));
+
+            $transactionType = 'authorize';
+            $newOrderStatus = $this->getConfigValue('authorize_status_id');
+            $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
+                        . ' transaction ref: ' . $this->paymentIntentId 
+                        . "\r\n" . 'Authorized amount: ' . $apiResponse['amount']['decimal']
+                        . ' (' . $apiResponse['amount']['currency'] . ')';
+            $successMessage = $this->language->get('success_message_authorized');
+            
+            if ($this->isInstantMode) {
+
                 $captureResponse = $this->lunarApiClient->payments()->capture($this->paymentIntentId, $params);
 
                 if ('completed' != $captureResponse['captureState']) {
@@ -170,19 +171,19 @@ abstract class AbstractLunarFrontController extends \Controller
                     $this->response->redirect($this->url->link('checkout/checkout'));
                 }
 
-            } catch (ApiException $e) {
-                $this->writeLog('Frontend API Exception: ' . $e->getMessage());
-                $this->session->data['error_warning'] = $e->getMessage();
-                $this->response->redirect($this->url->link('checkout/checkout'));
+                $transactionType = 'capture';
+                $newOrderStatus = $this->getConfigValue('capture_status_id');
+                $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
+                            . ' transaction ref: ' . $this->paymentIntentId 
+                            . "\r\n" . 'Captured amount: ' . $apiResponse['amount']['decimal']
+                            . ' (' . $apiResponse['amount']['currency'] . ')';
+                $successMessage = $this->language->get('success_message_captured');
             }
 
-            $transactionType = 'capture';
-            $newOrderStatus = $this->getConfigValue('capture_status_id');
-            $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
-                        . ' transaction ref: ' . $this->paymentIntentId 
-                        . "\r\n" . 'Captured amount: ' . $apiResponse['amount']['decimal']
-                        . ' (' . $apiResponse['amount']['currency'] . ')';
-            $successMessage = $this->language->get('success_message_captured');
+        } catch (ApiException $e) {
+            $this->writeLog('Frontend API Exception: ' . $e->getMessage());
+            $this->session->data['error_warning'] = $e->getMessage();
+            $this->response->redirect($this->url->link('checkout/checkout'));
         }
             
         $transactionData = [
@@ -339,7 +340,8 @@ abstract class AbstractLunarFrontController extends \Controller
     {
         $matchCurrency = $this->order['currency_code'] == $apiResponse['amount']['currency'];
         $matchAmount = (string) $this->order['total'] == $apiResponse['amount']['decimal'];
-
+file_put_contents(DIR_SYSTEM . 'storage/logs/zzz.log', json_encode($this->order, JSON_PRETTY_PRINT) . PHP_EOL, FILE_APPEND);
+file_put_contents(DIR_SYSTEM . 'storage/logs/zzz.log', json_encode($apiResponse, JSON_PRETTY_PRINT) . PHP_EOL, FILE_APPEND);
         return (true == $apiResponse['authorisationCreated'] && $matchCurrency && $matchAmount);
     }
 
