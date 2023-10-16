@@ -19,7 +19,7 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
     private $orderId;
 
     private string $storeId;
-    private $paymentMethod;
+    private $paymentCode;
     private $logger;
     private bool $testMode;
 
@@ -42,25 +42,22 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
             $this->session->data['error_warning'] = $this->language->get('error_no_order_found');
         }
 
-        if (!in_array($this->order['payment_code'], LunarHelper::LUNAR_METHODS)) {
+        $this->paymentCode = $this->order['payment_code'];
+
+        if (!in_array($this->paymentCode, LunarHelper::LUNAR_METHODS)) {
             return;
         }
 
         $this->storeId = $this->order['store_id'];
 
-        $this->paymentMethod = $this->order['payment_code'];
+        $this->logger = new Log($this->paymentCode . '.log');
 
-        $this->logger = new Log($this->order['payment_code'] . '.log');
+        $this->testMode = 'true' == ($this->request->cookie['lunar_testmode'] ?? '');
 
-        $this->testMode = 'test' == $this->getSettingValue('api_mode');
-        if ($this->testMode) {
-            $privateKey =  $this->getSettingValue('app_key_test');
-        } else {
-            $privateKey = $this->getSettingValue('app_key_live');
-        }
+        $this->publicKey = $this->getSettingValue('public_key');
 
         /** API Client instance */
-        $this->lunarApiClient = new ApiClient($privateKey, null, $this->testMode);
+        $this->lunarApiClient = new ApiClient($this->getSettingValue('app_key'), null, $this->testMode);
 	}
 
     /*******************************************************************************
@@ -182,7 +179,7 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
      */
     private function getSettingValue($key)
     {
-        return $this->model_setting_setting->getSettingValue('payment_' . $this->paymentMethod . '_' . $key, $this->storeId);
+        return $this->model_setting_setting->getSettingValue('payment_' . $this->paymentCode . '_' . $key, $this->storeId);
     }
     
     /**

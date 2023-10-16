@@ -1,10 +1,12 @@
 <?php
 
+require_once(DIR_SYSTEM . 'library/Lunar/helper/LunarHelper.php');
+
 class ModelExtensionPaymentLunar extends Model
 {
     public function install()
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS `lunar_transaction` (
+        $this->db->query("CREATE TABLE IF NOT EXISTS `" . LunarHelper::LUNAR_DB_TABLE . "` (
          `lunar_transaction_id` int(11) NOT NULL AUTO_INCREMENT,
          `order_id`             int(11) NOT NULL,
          `transaction_id`       char(50) NOT NULL,
@@ -22,7 +24,7 @@ class ModelExtensionPaymentLunar extends Model
 
     public function uninstall()
     {
-        // $this->db->query("DROP TABLE IF EXISTS `lunar_transaction`");
+        // $this->db->query("DROP TABLE IF EXISTS `" . LunarHelper::LUNAR_DB_TABLE . "`");
 
         $this->deleteEvents();
     }

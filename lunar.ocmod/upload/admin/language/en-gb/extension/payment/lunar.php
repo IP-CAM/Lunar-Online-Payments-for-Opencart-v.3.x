@@ -14,8 +14,6 @@ $_['text_capture_delayed']         = 'Delayed';
 $_['text_success']                 = 'Success: You have modified Lunar settings!';
 $_['text_upgrade']                 = 'Lunar successfully upgraded.';
 $_['text_setting_review_required'] = 'Please review and save Lunar settings.';
-$_['text_test']                    = 'Test';
-$_['text_live']                    = 'Live';
 
 //Default
 $_['default_checkout_cc_logo'] = array(
@@ -29,11 +27,8 @@ $_['select_store']                = 'Select store';
 
 // Entry
 $_['entry_payment_enabled']       = 'Status';
-$_['entry_api_mode']              = 'Transaction mode';
-$_['entry_public_key_test']       = 'Test mode Public Key';
-$_['entry_app_key_test']          = 'Test mode App Key';
-$_['entry_public_key_live']       = 'Public Key';
-$_['entry_app_key_live']          = 'App Key';
+$_['entry_public_key']            = 'Public Key';
+$_['entry_app_key']               = 'App Key';
 $_['entry_capture_mode']          = 'Capture mode';
 $_['entry_logo_url']              = 'Logo URL';
 $_['entry_configuration_id']      = 'Configuration ID';
@@ -52,11 +47,8 @@ $_['entry_sort_order']            = 'Sort Order';
 $_['entry_store']                 = 'Stores';
 
 // Help
-$_['help_api_mode']                   = 'In test mode, you can create a successful transaction with the card number 4100 0000 0000 0000 with any CVC and a valid expiration date.';
-$_['help_public_key_test']            = 'Get it from your Lunar dashboard';
-$_['help_app_key_test']               = 'Get it from your Lunar dashboard';
-$_['help_public_key_live']            = 'Get it from your Lunar dashboard';
-$_['help_app_key_live']               = 'Get it from your Lunar dashboard';
+$_['help_public_key']                 = 'Get it from your Lunar dashboard';
+$_['help_app_key']                    = 'Get it from your Lunar dashboard';
 $_['help_capture_mode']               = 'If you deliver your product instantly (e.g. a digital product), choose Instant mode. If not, use Delayed. In Delayed mode to capture a transaction you can change the order status to that set in Advanced section (default: Complete).';
 $_['help_logo_url']                   = 'The logo used in hosted checkout page after redirect';
 $_['help_configuration_id']           = 'Get it from your Lunar dashboard. It must have exactly 32 chars';
@@ -85,7 +77,7 @@ $_['error_app_key']              = 'The App Key is required!';
 $_['error_public_key']           = 'The Public Key is required!';
 $_['error_app_key_invalid']      = 'The App Key doesn\'t seem to be valid!';
 $_['error_public_key_invalid']   = 'The Public Key doesn\'t seem to be valid!';
-$_['error_app_key_invalid_mode'] = 'The App Key is not valid or checkout mode is incorrect!';
+$_['error_app_key_invalid_mode'] = 'The App Key is not valid or api mode is incorrect!';
 $_['error_config_id']            = 'The Configuration ID is required';
 $_['error_config_id_len']        = 'The Configuration ID should have exactly 32 characters. Current count: %s';
 $_['error_logo_url_required']    = 'The Logo URL is required';

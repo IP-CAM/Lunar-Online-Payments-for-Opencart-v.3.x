@@ -54,20 +54,15 @@ abstract class AbstractLunarAdminController extends \Controller
         // errors
         $this->maybeSetErrors($data, [
             'error_method_title',
-            'error_public_key_test',
-            'error_app_key_test',
-            'error_public_key_live',
-            'error_app_key_live',
+            'error_public_key',
+            'error_app_key',
             'error_logo_url',
             'error_configuration_id',
         ]);
 
         $this->setPostOrSettingValue($data, [
-            'api_mode' => null,
-            'app_key_test' => null,
-            'public_key_test' => null,
-            'app_key_live' => null,
-            'public_key_live' => null,
+            'app_key' => null,
+            'public_key' => null,
             'capture_mode' => 'delayed',
             'logo_url' => null,
             'method_title' => $this->language->get('default_method_title'),
@@ -91,9 +86,6 @@ abstract class AbstractLunarAdminController extends \Controller
         $this->paymentMethodCode == 'mobilePay' ? $this->setPostOrSettingValue($data, [
             'configuration_id' => null,
         ]) : null;
-        
-        
-        $data['debugMode'] = isset($this->request->get['debug']) || ($this->getSettingValue('api_mode') == 'test');
 
         $this->maybeSetAlertMessages($data);
 
@@ -129,8 +121,8 @@ abstract class AbstractLunarAdminController extends \Controller
     {
         if (
             is_null($this->getSettingValue('method_title'))
-            || is_null($this->getSettingValue('app_key_live'))
-            || is_null($this->getSettingValue('public_key_live'))
+            || is_null($this->getSettingValue('app_key'))
+            || is_null($this->getSettingValue('public_key'))
         ) {
             $data['warning'] = $this->language->get('text_setting_review_required');
         }
@@ -281,14 +273,14 @@ abstract class AbstractLunarAdminController extends \Controller
         // key validation temporary disabled
         
         // if ($this->request->post['payment_lunar_api_mode'] == 'live') {
-        //     $error_app_key_live = $this->validateAppKeyField($this->request->post['payment_lunar_app_key_live'],'live');
-        //     if($error_app_key_live){
-        //         $this->error['error_app_key_live'] = $error_app_key_live;
+        //     $error_app_key = $this->validateAppKeyField($this->request->post['payment_lunar_app_key'],'live');
+        //     if($error_app_key){
+        //         $this->error['error_app_key'] = $error_app_key;
         //     }
 
-        //     $error_public_key_live = $this->validatePublicKeyField($this->request->post['payment_lunar_public_key_live'],'live');
-        //     if($error_public_key_live){
-        //         $this->error['error_public_key_live'] =$error_public_key_live;
+        //     $error_public_key = $this->validatePublicKeyField($this->request->post['payment_lunar_public_key'],'live');
+        //     if($error_public_key){
+        //         $this->error['error_public_key'] =$error_public_key;
         //     }
 
         // }
@@ -475,8 +467,6 @@ abstract class AbstractLunarAdminController extends \Controller
             'button_cancel',
             'text_enabled',
             'text_disabled',
-            'text_test',
-            'text_live',
             'text_capture_instant',
             'text_capture_delayed',
             'text_description',
@@ -484,11 +474,8 @@ abstract class AbstractLunarAdminController extends \Controller
             'text_edit_settings',
             'text_general_settings',
             'text_advanced_settings',
-            'entry_api_mode',
-            'entry_public_key_test',
-            'entry_app_key_test',
-            'entry_public_key_live',
-            'entry_app_key_live',
+            'entry_public_key',
+            'entry_app_key',
             'entry_capture_mode',
             'entry_logo_url',
             'entry_configuration_id',
@@ -505,11 +492,8 @@ abstract class AbstractLunarAdminController extends \Controller
             'entry_geo_zone',
             'entry_sort_order',
             'entry_store',
-            'help_api_mode',
-            'help_public_key_test',
-            'help_app_key_test',
-            'help_public_key_live',
-            'help_app_key_live',
+            'help_public_key',
+            'help_app_key',
             'help_capture_mode',
             'help_logo_url',
             'help_configuration_id',

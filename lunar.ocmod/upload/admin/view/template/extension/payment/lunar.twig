@@ -97,81 +97,32 @@
                                 </div>
                             </div>
 
-                            {#
-                                Show some fields only in debug mode
-                            #}
-                            <div class="form-group" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="api_mode"><span data-toggle="tooltip"
-                                            title="{{ help_api_mode }}">{{ entry_api_mode }}</span></label>
-                                <div class="col-sm-10">
-                                    <select name="api_mode" id="api_mode" class="form-control">
-                                        {% if api_mode == 'test' %}
-                                            <option value="test" selected="selected">{{ text_test }}</option>
-                                            <option value="live">{{ text_live }}</option>
-                                        {% else %}
-                                            <option value="test">{{ text_test }}</option>
-                                            <option value="live" selected="selected">{{ text_live }}</option>
-                                        {% endif %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group required js-test-key" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="app_key_test"><span
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="app_key"><span
                                             data-toggle="tooltip"
-                                            title="{{ help_app_key_test }}">{{ entry_app_key_test }}</span></label>
+                                            title="{{ help_app_key }}">{{ entry_app_key }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="app_key_test"
-                                            value="{{ app_key_test }}"
-                                            placeholder="{{ entry_app_key_test }}" id="app_key_test"
+                                    <input type="text" name="app_key"
+                                            value="{{ app_key }}"
+                                            placeholder="{{ entry_app_key }}" id="app_key"
                                             class="form-control"/>
-                                    {% if error_app_key_test %}
-                                        <div class="text-danger">{{ error_app_key_test }}</div>
+                                    {% if error_app_key %}
+                                        <div class="text-danger">{{ error_app_key }}</div>
                                     {% endif %}
                                 </div>
                             </div>
 
-                            <div class="form-group required js-test-key" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="public_key_test"><span
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="public_key"><span
                                             data-toggle="tooltip"
-                                            title="{{ help_public_key_test }}">{{ entry_public_key_test }}</span></label>
+                                            title="{{ help_public_key }}">{{ entry_public_key }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="public_key_test"
-                                            value="{{ public_key_test }}"
-                                            placeholder="{{ entry_public_key_test }}" id="public_key_test"
+                                    <input type="text" name="public_key"
+                                            value="{{ public_key }}"
+                                            placeholder="{{ entry_public_key }}" id="public_key"
                                             class="form-control"/>
-                                    {% if error_public_key_test %}
-                                        <div class="text-danger">{{ error_public_key_test }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="form-group required js-live-key">
-                                <label class="col-sm-2 control-label" for="app_key_live"><span
-                                            data-toggle="tooltip"
-                                            title="{{ help_app_key_live }}">{{ entry_app_key_live }}</span></label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="app_key_live"
-                                            value="{{ app_key_live }}"
-                                            placeholder="{{ entry_app_key_live }}" id="app_key_live"
-                                            class="form-control"/>
-                                    {% if error_app_key_live %}
-                                        <div class="text-danger">{{ error_app_key_live }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="form-group required js-live-key">
-                                <label class="col-sm-2 control-label" for="public_key_live"><span
-                                            data-toggle="tooltip"
-                                            title="{{ help_public_key_live }}">{{ entry_public_key_live }}</span></label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="public_key_live"
-                                            value="{{ public_key_live }}"
-                                            placeholder="{{ entry_public_key_live }}" id="public_key_live"
-                                            class="form-control"/>
-                                    {% if error_public_key_live %}
-                                        <div class="text-danger">{{ error_public_key_live }}</div>
+                                    {% if error_public_key %}
+                                        <div class="text-danger">{{ error_public_key }}</div>
                                     {% endif %}
                                 </div>
                             </div>
