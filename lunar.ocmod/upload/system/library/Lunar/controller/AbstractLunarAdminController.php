@@ -71,7 +71,7 @@ abstract class AbstractLunarAdminController extends \Controller
             'authorize_status_id' => 1, // pending
             'capture_status_id' => 5, // complete
             'refund_status_id' => 11, // refunded
-            'cancel_status_id' => 9, // canceled reversal
+            'cancel_status_id' => 16, // voided
             'status' => null,
             'logging' => null,
             'minimum_total' => 0,

@@ -33,7 +33,7 @@ Under the extension settings, you can:
  ## How to capture / manage transactions
 
   In Delayed mode you can make transactions (full capture, refund, cancel) from admin panel, for each order info page, adding a history to the order. 
-  The `Order Status` that is wanted to be set for specific transaction must  be identical with that set in Lunar extension page (Advanced section/tab). By default it is `Completed` for capture, `Refunded` for refund and `Canceled Reversal` for cancel an order.
+  The `Order Status` that is wanted to be set for specific transaction must  be identical with that set in Lunar extension page (Advanced section/tab). By default it is `Completed` for capture, `Refunded` for refund and `Voided` for cancel an order.
 
 1. Capture
     * In Instant mode, the orders are captured automatically
@@ -43,7 +43,7 @@ Under the extension settings, you can:
     * In Delayed mode you can do this in admin panel, order info page, adding **`Refunded`** order status history to the order.
 
 3. Cancel
-    * In Delayed mode you can do this in admin panel, order info page, adding **`Canceled Reversal`** order status history to the order.
+    * In Delayed mode you can do this in admin panel, order info page, adding **`Voided`** order status history to the order.
 
 
 ## Available features
