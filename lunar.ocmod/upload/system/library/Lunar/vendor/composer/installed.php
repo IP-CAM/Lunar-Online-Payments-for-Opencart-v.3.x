@@ -1,31 +1,33 @@
 <?php return array(
     'root' => array(
-        'pretty_version' => 'dev-master',
-        'version' => 'dev-master',
-        'type' => 'opencart-module',
+        'name' => 'lunar/plugin-opencart-3',
+        'pretty_version' => '2.0.0',
+        'version' => '2.0.0.0',
+        'reference' => NULL,
+        'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => '82243312a3d99d32030a83c11a15fe5ccda38684',
-        'name' => 'lunar/plugin-opencart',
         'dev' => true,
     ),
     'versions' => array(
-        'lunar/plugin-opencart' => array(
+        'lunar/payments-api-sdk' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'type' => 'opencart-module',
-            'install_path' => __DIR__ . '/../../',
-            'aliases' => array(),
-            'reference' => '82243312a3d99d32030a83c11a15fe5ccda38684',
+            'reference' => '36436f5181dbeb0fdb3bd77b6c040c7a7abcc366',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../lunar/payments-api-sdk',
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
             'dev_requirement' => false,
         ),
-        'paylike/php-api' => array(
-            'pretty_version' => '1.0.5',
-            'version' => '1.0.5.0',
+        'lunar/plugin-opencart-3' => array(
+            'pretty_version' => '2.0.0',
+            'version' => '2.0.0.0',
+            'reference' => NULL,
             'type' => 'library',
-            'install_path' => __DIR__ . '/../paylike/php-api',
+            'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => '85cd1fd04f98afd68b628735aad94add2f4c0223',
             'dev_requirement' => false,
         ),
     ),

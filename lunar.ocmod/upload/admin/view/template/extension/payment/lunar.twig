@@ -1,21 +1,13 @@
 {{ header }}{{ column_left }}
 
-{#
-    Define module config code to be used bellow
-    We need that config key equals with input name
-#}
-{% set configCode = 'payment_lunar' %}
-
 <div id="content">
     <div class="page-header">
         <div class="container-fluid">
             <div class="pull-right">
-                <button type="submit" form="module-config-form" data-toggle="tooltip" title="{{ button_save }}"
+                <button type="submit" form="lunar-config-form" data-toggle="tooltip" title="{{ button_save }}"
                         class="btn btn-primary"><i class="fa fa-save"></i></button>
                 <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i
                             class="fa fa-reply"></i></a>
-                <a href="{{ module_payments }}" data-toggle="tooltip" title="{{ button_payments }}"
-                        class="btn btn-success"><i class="fa fa-calculator"></i></a>
             </div>
             <h1>{{ heading_title }}</h1>
             <ul class="breadcrumb">
@@ -31,6 +23,11 @@
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             </div>
         {% endif %}
+        {% if warning %}
+            <div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i>&nbsp;{{ warning }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        {% endif %}
         {% if success %}
             <div class="alert alert-success"><i class="fa fa-exclamation-circle"></i>&nbsp;{{ success }}
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -38,18 +35,20 @@
         {% endif %}
 
         <div class="panel panel-default">
+
             <div class="panel-heading">
-                <h3 class="panel-title" data-module-version="{{ text_module_version }}"><i class="fa fa-pencil"></i>&nbsp;{{ text_edit_settings }}</h3>
+                <h3 class="panel-title" data-module-version="{{ plugin_version }}"><i class="fa fa-pencil"></i>&nbsp;{{ text_edit_settings }}</h3>
             </div>
+            
             <div class="panel-body">
 
-                <form action="{{ action }}" method="post" enctype="multipart/form-data" id="module-config-form"
+                <form action="{{ action }}" method="post" enctype="multipart/form-data" id="lunar-config-form"
                         class="form-horizontal">
 
                     <div class="alert alert-info">{{ text_description }}</div>
 
                     {# Store select begin #}
-                    <div class="col-sm-12 pr-40 required">
+                    <div class="form-group required">
                         <label class="col-sm-2 control-label" for="config_selected_store"><span
                                     data-toggle="tooltip"
                                     title="{{ help_select_store }}">{{ select_store }}</span></label>
@@ -70,26 +69,24 @@
                     </div>
                     {# Store select end #}
 
-
-
-                    <ul class="nav nav-tabs" id="tabs">
-                        <li class="active"><a href="#tab-general_settings"
-                                    data-toggle="tab">{{ text_general_settings }}</a></li>
-                        <li><a href="#tab-advanced_settings" data-toggle="tab">{{ text_advanced_settings }}</a></li>
+                    <ul class="nav nav-tabs" id="lunar-tabs">
+                        <li class="active"><a href="#tab-general-settings" data-toggle="tab">{{ text_general_settings }}</a></li>
+                        <li><a href="#tab-advanced-settings" data-toggle="tab">{{ text_advanced_settings }}</a></li>
                     </ul>
 
                     <div class="tab-content">
 
-                        <div class="tab-pane active" id="tab-general_settings">
+
+                        <div class="tab-pane active" id="tab-general-settings">
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_status"><span
+                                <label class="col-sm-2 control-label" for="status"><span
                                             data-toggle="tooltip"
                                             title="{{ help_payment_enabled }}">{{ entry_payment_enabled }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="{{ configCode }}_status" id="module_status"
+                                    <select name="status" id="status"
                                             class="form-control">
-                                        {% if module_status %}
+                                        {% if status %}
                                             <option value="1" selected="selected">{{ text_enabled }}</option>
                                             <option value="0">{{ text_disabled }}</option>
                                         {% else %}
@@ -101,142 +98,43 @@
                             </div>
 
                             <div class="form-group required">
-                                <label class="col-sm-2 control-label" for="module_method_title"><span
+                                <label class="col-sm-2 control-label" for="app_key"><span
                                             data-toggle="tooltip"
-                                            title="{{ help_payment_method_title }}">{{ entry_payment_method_title }}</span></label>
+                                            title="{{ help_app_key }}">{{ entry_app_key }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="{{ configCode }}_method_title"
-                                            value="{{ module_method_title }}"
-                                            placeholder="{{ entry_payment_method_title }}"
-                                            id="module_method_title" class="form-control"/>
-                                    {% if error_payment_method_title %}
-                                        <div class="text-danger">{{ error_payment_method_title }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="col-sm-2 control-label"><span data-toggle="tooltip"
-                                            title="{{ help_checkout_cc_logo }}">{{ entry_checkout_cc_logo }}</span></label>
-                                <div class="col-sm-10">
-                                    <div class="well well-sm" style="overflow: auto;">
-                                        {% for ccLogo in ccLogos %}
-                                            <div class="checkbox">
-                                                <label>
-                                                    {% if ccLogo.logo in module_checkout_cc_logo %}
-                                                        <input type="checkbox" name="{{ configCode }}_checkout_cc_logo[]"
-                                                                value="{{ ccLogo.logo }}" checked="checked"/>
-                                                        {{ ccLogo.name }}
-                                                    {% else %}
-                                                        <input type="checkbox" name="{{ configCode }}_checkout_cc_logo[]"
-                                                                value="{{ ccLogo.logo }}"/>
-                                                        {{ ccLogo.name }}
-                                                    {% endif %}
-                                                </label>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_popup_title"><span
-                                            data-toggle="tooltip"
-                                            title="{{ help_checkout_popup_title }}">{{ entry_checkout_popup_title }}</span></label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="{{ configCode }}_checkout_title"
-                                            value="{{ module_checkout_title }}"
-                                            placeholder="{{ entry_checkout_popup_title }}"
-                                            id="module_popup_title" class="form-control"/>
-                                </div>
-                            </div>
-
-                            {#
-                                Show the following fields only in debug mode
-                            #}
-                            <div class="form-group" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="module_api_mode"><span data-toggle="tooltip"
-                                            title="{{ help_api_mode }}">{{ entry_api_mode }}</span></label>
-                                <div class="col-sm-10">
-                                    <select name="{{ configCode }}_api_mode" id="module_api_mode" class="form-control">
-                                        {% if module_api_mode == 'test' %}
-                                            <option value="test" selected="selected">{{ text_test }}</option>
-                                            <option value="live">{{ text_live }}</option>
-                                        {% else %}
-                                            <option value="test">{{ text_test }}</option>
-                                            <option value="live" selected="selected">{{ text_live }}</option>
-                                        {% endif %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group required js-test-key" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="module_app_key_test"><span
-                                            data-toggle="tooltip"
-                                            title="{{ help_app_key_test }}">{{ entry_app_key_test }}</span></label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="{{ configCode }}_app_key_test"
-                                            value="{{ module_app_key_test }}"
-                                            placeholder="{{ entry_app_key_test }}" id="module_app_key_test"
+                                    <input type="text" name="app_key"
+                                            value="{{ app_key }}"
+                                            placeholder="{{ entry_app_key }}" id="app_key"
                                             class="form-control"/>
-                                    {% if error_app_key_test %}
-                                        <div class="text-danger">{{ error_app_key_test }}</div>
+                                    {% if error_app_key %}
+                                        <div class="text-danger">{{ error_app_key }}</div>
                                     {% endif %}
                                 </div>
                             </div>
 
-                            <div class="form-group required js-test-key" {% if not debugMode %}{{'hidden'}}{% endif %}>
-                                <label class="col-sm-2 control-label" for="module_public_key_test"><span
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="public_key"><span
                                             data-toggle="tooltip"
-                                            title="{{ help_public_key_test }}">{{ entry_public_key_test }}</span></label>
+                                            title="{{ help_public_key }}">{{ entry_public_key }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="{{ configCode }}_public_key_test"
-                                            value="{{ module_public_key_test }}"
-                                            placeholder="{{ entry_public_key_test }}" id="module_public_key_test"
+                                    <input type="text" name="public_key"
+                                            value="{{ public_key }}"
+                                            placeholder="{{ entry_public_key }}" id="public_key"
                                             class="form-control"/>
-                                    {% if error_public_key_test %}
-                                        <div class="text-danger">{{ error_public_key_test }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="form-group required js-live-key">
-                                <label class="col-sm-2 control-label" for="module_app_key_live"><span
-                                            data-toggle="tooltip"
-                                            title="{{ help_app_key_live }}">{{ entry_app_key_live }}</span></label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="{{ configCode }}_app_key_live"
-                                            value="{{ module_app_key_live }}"
-                                            placeholder="{{ entry_app_key_live }}" id="module_app_key_live"
-                                            class="form-control"/>
-                                    {% if error_app_key_live %}
-                                        <div class="text-danger">{{ error_app_key_live }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="form-group required js-live-key">
-                                <label class="col-sm-2 control-label" for="module_public_key_live"><span
-                                            data-toggle="tooltip"
-                                            title="{{ help_public_key_live }}">{{ entry_public_key_live }}</span></label>
-                                <div class="col-sm-10">
-                                    <input type="text" name="{{ configCode }}_public_key_live"
-                                            value="{{ module_public_key_live }}"
-                                            placeholder="{{ entry_public_key_live }}" id="module_public_key_live"
-                                            class="form-control"/>
-                                    {% if error_public_key_live %}
-                                        <div class="text-danger">{{ error_public_key_live }}</div>
+                                    {% if error_public_key %}
+                                        <div class="text-danger">{{ error_public_key }}</div>
                                     {% endif %}
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_capture_mode"><span
+                                <label class="col-sm-2 control-label" for="capture_mode"><span
                                             data-toggle="tooltip"
                                             title="{{ help_capture_mode }}">{{ entry_capture_mode }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="{{ configCode }}_capture_mode" id="module_capture_mode"
+                                    <select name="capture_mode" id="capture_mode"
                                             class="form-control">
-                                        {% if module_capture_mode == 'instant' %}
+                                        {% if capture_mode == 'instant' %}
                                             <option value="instant"
                                                     selected="selected">{{ text_capture_instant }}</option>
                                             <option value="delayed">{{ text_capture_delayed }}</option>
@@ -249,21 +147,109 @@
                                 </div>
                             </div>
 
+                            {% if configuration_id is defined %}
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="configuration_id"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_configuration_id }}">{{ entry_configuration_id }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="configuration_id"
+                                            value="{{ configuration_id }}"
+                                            placeholder="{{ entry_configuration_id }}"
+                                            id="configuration_id" class="form-control"/>
+                                    {% if error_configuration_id %}
+                                        <div class="text-danger">{{ error_configuration_id }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="logo_url"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_logo_url }}">{{ entry_logo_url }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="logo_url"
+                                            value="{{ logo_url }}"
+                                            placeholder="{{ entry_logo_url }}"
+                                            id="logo_url" class="form-control"/>
+                                    {% if error_logo_url %}
+                                        <div class="text-danger">{{ error_logo_url }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="method_title"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_method_title }}">{{ entry_method_title }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="method_title"
+                                            value="{{ method_title }}"
+                                            placeholder="{{ entry_method_title }}"
+                                            id="method_title" class="form-control"/>
+                                    {% if error_method_title %}
+                                        <div class="text-danger">{{ error_method_title }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="shop_title"><span
+                                            data-toggle="tooltip"
+                                            title="{{ help_shop_title }}">{{ entry_shop_title }}</span></label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="shop_title"
+                                            value="{{ shop_title }}"
+                                            placeholder="{{ entry_shop_title }}"
+                                            id="shop_title" class="form-control"/>
+                                </div>
+                            </div>
+
+                            {% if checkout_cc_logo is defined %}
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label"><span data-toggle="tooltip"
+                                            title="{{ help_checkout_cc_logo }}">{{ entry_checkout_cc_logo }}</span></label>
+                                <div class="col-sm-10">
+                                    <div class="well well-sm" style="overflow: auto;">
+                                        {% for ccLogo in ccLogos %}
+                                            <div class="checkbox">
+                                                <label>
+                                                    {% if ccLogo.logo in checkout_cc_logo %}
+                                                        <input type="checkbox" name="checkout_cc_logo[]"
+                                                                value="{{ ccLogo.logo }}" checked="checked"/>
+                                                        {{ ccLogo.name }}
+                                                    {% else %}
+                                                        <input type="checkbox" name="checkout_cc_logo[]"
+                                                                value="{{ ccLogo.logo }}"/>
+                                                        {{ ccLogo.name }}
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
 
                         </div>
 
 
-                        <div class="tab-pane" id="tab-advanced_settings">
+                        {# 
+                            ADVANCED SETTINGS
+                        #}
+
+                        <div class="tab-pane" id="tab-advanced-settings">
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_authorize_status_id"><span
+                                <label class="col-sm-2 control-label" for="authorize_status_id"><span
                                             data-toggle="tooltip"
                                             title="{{ help_authorize_status_id }}">{{ entry_authorize_status_id }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="{{ configCode }}_authorize_status_id" id="module_authorize_status_id"
+                                    <select name="authorize_status_id" id="authorize_status_id"
                                             class="form-control">
                                         {% for order_status in order_statuses %}
-                                            {% if order_status.order_status_id == module_authorize_status_id %}
+                                            {% if order_status.order_status_id == authorize_status_id %}
                                                 <option value="{{ order_status.order_status_id }}"
                                                         selected="selected">{{ order_status.name }}</option>
                                             {% else %}
@@ -275,14 +261,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_capture_status_id"><span
+                                <label class="col-sm-2 control-label" for="capture_status_id"><span
                                             data-toggle="tooltip"
                                             title="{{ help_capture_status_id }}">{{ entry_capture_status_id }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="{{ configCode }}_capture_status_id" id="module_capture_status_id"
+                                    <select name="capture_status_id" id="capture_status_id"
                                             class="form-control">
                                         {% for order_status in order_statuses %}
-                                            {% if order_status.order_status_id == module_capture_status_id %}
+                                            {% if order_status.order_status_id == capture_status_id %}
                                                 <option value="{{ order_status.order_status_id }}"
                                                         selected="selected">{{ order_status.name }}</option>
                                             {% else %}
@@ -294,14 +280,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_refund_status_id"><span
+                                <label class="col-sm-2 control-label" for="refund_status_id"><span
                                             data-toggle="tooltip"
                                             title="{{ help_refund_status_id }}">{{ entry_refund_status_id }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="{{ configCode }}_refund_status_id" id="module_refund_status_id"
+                                    <select name="refund_status_id" id="refund_status_id"
                                             class="form-control">
                                         {% for order_status in order_statuses %}
-                                            {% if order_status.order_status_id == module_refund_status_id %}
+                                            {% if order_status.order_status_id == refund_status_id %}
                                                 <option value="{{ order_status.order_status_id }}"
                                                         selected="selected">{{ order_status.name }}</option>
                                             {% else %}
@@ -313,14 +299,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_void_status_id"><span
+                                <label class="col-sm-2 control-label" for="cancel_status_id"><span
                                             data-toggle="tooltip"
-                                            title="{{ help_void_status_id }}">{{ entry_void_status_id }}</span></label>
+                                            title="{{ help_cancel_status_id }}">{{ entry_cancel_status_id }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="{{ configCode }}_void_status_id" id="module_void_status_id"
+                                    <select name="cancel_status_id" id="cancel_status_id"
                                             class="form-control">
                                         {% for order_status in order_statuses %}
-                                            {% if order_status.order_status_id == module_void_status_id %}
+                                            {% if order_status.order_status_id == cancel_status_id %}
                                                 <option value="{{ order_status.order_status_id }}"
                                                         selected="selected">{{ order_status.name }}</option>
                                             {% else %}
@@ -332,11 +318,11 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_logging"><span data-toggle="tooltip"
+                                <label class="col-sm-2 control-label" for="logging"><span data-toggle="tooltip"
                                             title="{{ help_logging }}">{{ entry_logging }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="{{ configCode }}_logging" id="module_logging" class="form-control">
-                                        {% if module_logging %}
+                                    <select name="logging" id="logging" class="form-control">
+                                        {% if logging %}
                                             <option value="1" selected="selected">{{ text_enabled }}</option>
                                             <option value="0">{{ text_disabled }}</option>
                                         {% else %}
@@ -348,25 +334,25 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_minimum_total"><span
+                                <label class="col-sm-2 control-label" for="minimum_total"><span
                                             data-toggle="tooltip"
                                             title="{{ help_minimum_total }}">{{ entry_minimum_total }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="{{ configCode }}_minimum_total"
-                                            value="{{ module_minimum_total }}"
-                                            placeholder="{{ entry_minimum_total }}" id="module_minimum_total"
+                                    <input type="text" name="minimum_total"
+                                            value="{{ minimum_total }}"
+                                            placeholder="{{ entry_minimum_total }}" id="minimum_total"
                                             class="form-control"/>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_geo_zone"><span data-toggle="tooltip"
+                                <label class="col-sm-2 control-label" for="geo_zone"><span data-toggle="tooltip"
                                             title="{{ help_geo_zone }}">{{ entry_geo_zone }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="{{ configCode }}_geo_zone" id="module_geo_zone" class="form-control">
+                                    <select name="geo_zone" id="geo_zone" class="form-control">
                                         <option value="0">{{ text_all_zones }}</option>
                                         {% for geo_zone in geo_zones %}
-                                            {% if geo_zone.geo_zone_id == module_geo_zone %}
+                                            {% if geo_zone.geo_zone_id == geo_zone %}
                                                 <option value="{{ geo_zone.geo_zone_id }}"
                                                         selected="selected">{{ geo_zone.name }}</option>
                                             {% else %}
@@ -378,13 +364,13 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label" for="module_sort_order"><span
+                                <label class="col-sm-2 control-label" for="sort_order"><span
                                             data-toggle="tooltip"
                                             title="{{ help_sort_order }}">{{ entry_sort_order }}</span></label>
                                 <div class="col-sm-10">
-                                    <input type="text" name="{{ configCode }}_sort_order"
-                                            value="{{ module_sort_order }}"
-                                            placeholder="{{ entry_sort_order }}" id="module_sort_order"
+                                    <input type="text" name="sort_order"
+                                            value="{{ sort_order }}"
+                                            placeholder="{{ entry_sort_order }}" id="sort_order"
                                             class="form-control"/>
                                 </div>
                             </div>
@@ -392,6 +378,7 @@
                         </div>
 
                     </div>
+
                 </form>
             </div>
         </div>
@@ -401,138 +388,28 @@
 
 <script type="text/javascript">
 
-    $('#tabs a:first').tab('show');
+    let storeId = getURLVar("store_id");
+    storeId = storeId ? storeId : 0;
 
-    /** Triggered on selection change */
-    $(document).on('change','#module_api_mode', function(){
-        toggleFields($(this).val());
-    });
+    $("#config_selected_store").val(storeId);
 
-    /** Show/Hide live and test fields based on selected value of the "#module_api_mode" selectbox*/
-    function toggleFields(mode){
-        if(mode == 'live'){
-            $('.js-live-key').show();
-        }
-    }
-
-    /** Hide live fields when test mode active - prevents misuse. */
-    if ('debug' !== document.location.search.match(/debug/gi)?.toString()) {
-        if ('test' === $("#module_api_mode").val()) {
-            $('.js-live-key').hide();
-        }
-    }
-
-    /**
-     * On select a store, populate form data with selected store config data
-     */
     $("#config_selected_store").on("change", function() {
-
         /** Remove any previous errors. */
         $(".select-store-dropdown-error").val();
 
-        /** Set store ID variable. */
-        var storeId = $(this).val();
-
-        /** PAyment module configuration code prefix. */
-        const configCode = 'payment_lunar';
-
-        /** Ajax call to get selected store config data. */
-        $.ajax({
-            method: "POST",
-            url: "index.php?route=extension/payment/lunar/get_store_settings&user_token=" + getURLVar("user_token"),
-            dataType: "json",
-            contentType: "application/x-www-form-urlencoded",
-            data: {
-                store_id: storeId
-            },
-            success: function (data, status, xhr) {
-
-                /** Add selected attribute to selected store option */
-                setSelectedAttributeOnSelectedOption(this.id, storeId)
-
-                /** Add status option to status input. If not exists, change to disabled. */
-                $("#module_status option").each(function () {
-                    if (data?.[`${configCode}_status`]) {
-                        if (data[`${configCode}_status`] !== $(this).val()) {
-                            $(this).removeAttr("selected");
-                        } else {
-                            $(this).attr("selected", true);
-                        }
-                    } else {
-                        if (1 == $(this).val()) {
-                            $(this).removeAttr("selected");
-                        } else {
-                            $(this).attr("selected", true);
-                        }
-                    }
-                });
-
-                $("#module_method_title").val(data?.[`${configCode}_method_title`] ?? '');
-                $("#module_popup_title").val(data?.[`${configCode}_checkout_title`] ?? '');
-
-                $(`input[name='${configCode}_checkout_cc_logo[]']`).each(function () {
-                    if (`${configCode}_checkout_cc_logo` in data) {
-                        if ( ! data[`${configCode}_checkout_cc_logo`].includes($(this).val())) {
-                            $(this).prop("checked", false);
-                        } else {
-                            $(this).prop("checked", true);
-                        }
-                    } else {
-                        $(this).prop("checked", true);
-                    }
-                });
-
-                /** Set selected on api mode dropdown. Default = live. */
-                setSelectedAttributeOnSelectedOption("module_api_mode", data?.[`${configCode}_api_mode`] ?? "live");
-                toggleFields(data?.["module_api_mode"] ?? "live")
-
-                /** Set selected on capture mode dropdown. Default = delayed. */
-                setSelectedAttributeOnSelectedOption("module_capture_mode", data?.[`${configCode}_capture_mode`] ?? "delayed");
-
-                $("#module_app_key_test").val(data?.[`${configCode}_app_key_test`] ?? '');
-                $("#module_public_key_test").val(data?.[`${configCode}_public_key_test`] ?? '');
-                $("#module_app_key_live").val(data?.[`${configCode}_app_key_live`] ?? '');
-                $("#module_public_key_live").val(data?.[`${configCode}_public_key_live`] ?? '');
-
-                /**
-                 * !!! HARDCODED ORDER STATUSES IDS !!!
-                 */
-                $("#module_authorize_status_id").val(data?.[`${configCode}_authorize_status_id`] ?? 1);
-                $("#module_capture_status_id").val(data?.[`${configCode}_capture_status_id`] ?? 5);
-                $("#module_refund_status_id").val(data?.[`${configCode}_refund_status_id`] ?? 11);
-                $("#module_void_status_id").val(data?.[`${configCode}_void_status_id`] ?? 16);
-
-                $("#module_logging").val(data?.[`${configCode}_logging`] ?? 0);
-                $("#module_minimum_total").val(data?.[`${configCode}_minimum_total`] ?? 0);
-                $("#module_geo_zone").val(data?.[`${configCode}_geo_zone`] ?? 0);
-                $("#module_sort_order").val(data?.[`${configCode}_sort_order`] ?? 0);
-
-            },
-            error: function (jqXhr, textStatus, errorMessage) {
-                /** Check if error is of type "parsererror". This shows up when token expire. */
-                if ('parsererror' == textStatus) {
-                    location.href = 'index.php?route=extension/payment/lunar';
-                } else {
-                    $(".select-store-dropdown-error").append("Error: " + errorMessage).addClass("text-danger");
-                    console.error(errorMessage)
-                }
-            }
-        });
-
+        storeId = $(this).val();
+        window.location = `index.php?route=extension/payment/lunar_{{ methodCode }}&store_id=${storeId}&user_token=` + getURLVar("user_token");
     });
 
-    /** Module status set "selected" on change. */
-    $("#module_status").on("change", function() {
+    $("#payment_lunar_status").on("change", function() {
         setSelectedAttributeOnSelectedOption(this.id, $(this).val());
     });
 
-    /** Module api mode set "selected" on change. */
-    $("#module_api_mode").on("change", function() {
+    $("#payment_lunar_api_mode").on("change", function() {
         setSelectedAttributeOnSelectedOption(this.id, $(this).val());
     });
 
     /**
-     * Function "Set Selected Attribute On Selected Option"
      * Set selected attribute on dropdown selected option
      */
     function setSelectedAttributeOnSelectedOption(selector, value) {
