@@ -100,13 +100,8 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
             $fetchedTransaction = $this->lunarApiClient->payments()->fetch($paymentIntentId);
 
             if (!$fetchedTransaction) {
-                $this->writeLog('Unable to Fetch transaction for intent ID: ' . $paymentIntentId);
+                $this->writeLog('Unable to Fetch transaction for intent ID: ' . $paymentIntentId, true);
                 return ['error' => $this->language->get('error_empty_transaction_result')];
-            }
-
-            if ($fetchedTransaction['amount']['currency'] != $lastTransaction['transaction_currency']) {
-                $this->writeLog('Error: Capture currency (' . $currency . ') not equal to Transaction currency (' . $fetchedTransaction['transaction']['currency'] . '). Transaction aborted!');
-                return ['error' => $this->language->get('error_transaction_currency')];
             }
 
             $data = [
@@ -136,10 +131,10 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
                     break;
             }
         } catch (ApiException $e) {
-            $this->writeLog('API Exception: ' . $e->getMessage());
+            $this->writeLog('API Exception: ' . $e->getMessage(), true);
             $exceptionMessage = $e->getMessage();
         } catch (\Exception $e) {
-            $this->writeLog('General Exception: ' . $e->getMessage());
+            $this->writeLog('General Exception: ' . $e->getMessage(), true);
             $exceptionMessage = $e->getMessage();
         }
         
@@ -151,7 +146,7 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
             $errorMessage = $this->language->get('error_message');
             if ($response['declinedReason'] ?? null) {
                 $errorMessage = $response['declinedReason']['error'] ?? json_encode($response);
-                $this->writeLog('Declined transaction: ' . $errorMessage);
+                $this->writeLog('Declined transaction: ' . $errorMessage, true);
             }
             return ['error' => $errorMessage];
         }
@@ -166,12 +161,13 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
             'order_amount'         => $lastTransaction['order_amount'],
             'transaction_amount'   => $amount,
             'history'              => '0',
+            'formatted_amount'     => $this->currency->format($amount, $currency),
         ];
 
         $this->model_extension_payment_lunar_transaction->addTransaction($dataForDB);
         $this->model_extension_payment_lunar_transaction->updateOrder($dataForDB, $orderStatusId);
 
-        return ['success' => sprintf($this->language->get("success_transaction_{$actionType}"), $amount) . ' ' . $currency];
+        return ['success' => sprintf($this->language->get("success_transaction_{$actionType}"), $dataForDB['formatted_amount'])];
     }
 
     /**
@@ -185,10 +181,13 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
     /**
      * 
      */
-    private function writeLog($logMessage)
+    private function writeLog($logMessage, $toErrorLog = false)
     {
         if ($this->getSettingValue('logging')) {
             $this->logger->write($logMessage);
+        }
+        if ($toErrorLog) {
+            $this->log->write($logMessage);
         }
     }
 }

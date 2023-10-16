@@ -75,8 +75,7 @@ class ModelExtensionPaymentLunarTransaction extends Model
     {
         $comment = 'Transaction ref: ' . $data['transaction_id'] . "\r\n" 
                     . 'Type: ' . $data['transaction_type']
-                    . ' - Amount: ' . $data['transaction_amount'] 
-                    . ' (' . $data['transaction_currency'] . ')';
+                    . ' - Amount: ' . $data['formatted_amount'];
 
         $this->db->query("UPDATE `" . DB_PREFIX . "order_history`
                             SET notify = '1',

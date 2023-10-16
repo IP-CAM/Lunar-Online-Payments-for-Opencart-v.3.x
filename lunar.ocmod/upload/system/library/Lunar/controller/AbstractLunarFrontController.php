@@ -187,19 +187,21 @@ abstract class AbstractLunarFrontController extends \Controller
             $this->session->data['error'] = $this->language->get('error_transaction_exception');
             return $this->response->redirect($this->url->link('checkout/checkout'));
         }
+
+        $currency = $apiResponse['amount']['currency'];
+        $amount = $apiResponse['amount']['decimal'];
             
         $transactionData = [
             'order_id' => $this->orderId,
             'transaction_id' => $this->paymentIntentId,
             'transaction_type' => $transactionType,
-            'transaction_currency' => $apiResponse['amount']['currency'],
+            'transaction_currency' => $currency,
             'order_amount' => $this->order['total'],
-            'transaction_amount' => $apiResponse['amount']['decimal'],
+            'transaction_amount' => $amount,
         ];
 
         $comment = 'Transaction ref: ' . $this->paymentIntentId
-                    . "\r\n" . ucfirst($transactionType) . 'd amount: ' . $apiResponse['amount']['decimal']
-                    . ' (' . $apiResponse['amount']['currency'] . ')';
+                    . "\r\n" . ucfirst($transactionType) . 'd amount: ' . $this->currency->format($amount, $currency);
         $this->model_checkout_order->addOrderHistory($this->orderId, $newOrderStatus, $comment, $notify = true);
 
         $this->updateInitTransaction($transactionData);
@@ -364,13 +366,11 @@ abstract class AbstractLunarFrontController extends \Controller
     private function writeLog($logMessage, $toErrorLog = false)
     {
         if ($this->getConfigValue('logging')) {
-            if ($toErrorLog) {
-                $this->log->write($logMessage);
-            } else {
-                $this->logger->write($logMessage);
-            }
+            $this->logger->write($logMessage);
         }
-
+        if ($toErrorLog) {
+            $this->log->write($logMessage);
+        }
     }
 
     /**
