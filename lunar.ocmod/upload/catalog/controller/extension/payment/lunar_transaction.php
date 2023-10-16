@@ -52,7 +52,7 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
 
         $this->logger = new Log($this->paymentCode . '.log');
 
-        $this->testMode = 'true' == ($this->request->cookie['lunar_testmode'] ?? '');
+        $this->testMode = (bool) ($this->request->cookie['lunar_testmode'] ?? 0); // possible values: 1 & 0
 
         $this->publicKey = $this->getSettingValue('public_key');
 

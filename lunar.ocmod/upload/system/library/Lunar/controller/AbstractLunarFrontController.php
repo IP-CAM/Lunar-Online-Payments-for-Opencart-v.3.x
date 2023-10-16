@@ -57,7 +57,7 @@ abstract class AbstractLunarFrontController extends \Controller
 
         $this->isInstantMode = 'instant' == $this->getConfigValue('capture_mode');
 
-        $this->testMode = 'true' == ($this->request->cookie['lunar_testmode'] ?? '');
+        $this->testMode = (bool) ($this->request->cookie['lunar_testmode'] ?? 0); // possible values: 1 & 0
 
         $this->publicKey = $this->getConfigValue('public_key');
 
