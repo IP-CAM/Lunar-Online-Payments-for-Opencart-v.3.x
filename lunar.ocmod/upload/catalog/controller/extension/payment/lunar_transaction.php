@@ -1,7 +1,7 @@
 <?php
 
 require_once(DIR_SYSTEM . 'library/Lunar/vendor/autoload.php');
-
+require_once(DIR_SYSTEM . 'library/Lunar/helper/LunarHelper.php');
 
 use Lunar\Lunar as ApiClient;
 use Lunar\Exception\ApiException;
@@ -12,26 +12,23 @@ use Lunar\Exception\ApiException;
 class ControllerExtensionPaymentLunarTransaction extends \Controller
 {
     const MODEL_PATH = 'extension/payment/lunar_transaction';
-    const LUNAR_METHODS = [
-        'lunar_card',
-        'lunar_mobilepay',
-    ];
 
     private ApiClient $lunarApiClient;
 
     /** @var int|string|null */
     private $orderId;
 
+    private string $storeId;
+    private $paymentMethod;
     private $logger;
     private bool $testMode;
-    private string $storeId;
 
     public function index() {}
 
     public function __construct($registry) {
 		parent::__construct($registry);
 
-        $this->load->language('extension/payment/lunar');
+        $this->load->language(LunarHelper::LUNAR_GENERAL_PATH);
         $this->load->model(self::MODEL_PATH);
         $this->load->model('checkout/order');
         $this->load->model('setting/setting');
@@ -45,11 +42,13 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
             $this->session->data['error_warning'] = $this->language->get('error_no_order_found');
         }
 
-        if (!in_array($this->order['payment_code'], self::LUNAR_METHODS)) {
+        if (!in_array($this->order['payment_code'], LunarHelper::LUNAR_METHODS)) {
             return;
         }
 
         $this->storeId = $this->order['store_id'];
+
+        $this->paymentMethod = $this->order['payment_code'];
 
         $this->logger = new Log($this->order['payment_code'] . '.log');
 
@@ -83,12 +82,15 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
      */
     public function execute()
     {
+        $exceptionMessage = null;
+
         $lastTransaction = $this->model_extension_payment_lunar_transaction->getLastTransaction($this->orderId);
 
         if (!$lastTransaction) {
             return ['error' => $this->language->get('error_empty_transaction_result')];
         }
 
+        $orderStatusId = $this->order['order_status_id'];
         $paymentIntentId = $lastTransaction['transaction_id'];
         $currency = $lastTransaction['transaction_currency'];
         $amount = $lastTransaction['transaction_amount'];
@@ -120,8 +122,7 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
             $actionType = '';
             $response = [];
 
-
-            switch ($this->order['order_status_id']) {
+            switch ($orderStatusId) {
                 case $this->getSettingValue('capture_status_id'):
                     $actionType = 'capture';
                     $response = $this->lunarApiClient->payments()->capture($paymentIntentId, $data);
@@ -139,20 +140,26 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
             }
         } catch (ApiException $e) {
             $this->writeLog('API Exception: ' . $e->getMessage());
-            return ['error' => $e->getMessage()];
+            $exceptionMessage = $e->getMessage();
         } catch (\Exception $e) {
             $this->writeLog('General Exception: ' . $e->getMessage());
-            return ['error' => $e->getMessage()];
+            $exceptionMessage = $e->getMessage();
+        }
+        
+        if ($exceptionMessage) {
+            return ['error' => $exceptionMessage];
         }
 
         if (isset($response["{$actionType}State"]) && 'completed' != $response["{$actionType}State"]) {
             $errorMessage = $this->language->get('error_message');
             if ($response['declinedReason'] ?? null) {
-                $errorMessage = $response['declinedReason'];
+                $errorMessage = $response['declinedReason']['error'] ?? json_encode($errorMessage);
                 $this->writeLog('Declined transaction: ' . $errorMessage);
             }
             return ['error' => $errorMessage];
         }
+
+        $this->writeLog('API response: ' . json_encode($response));
 
         $dataForDB = [
             'order_id'             => $this->orderId,
@@ -165,7 +172,7 @@ class ControllerExtensionPaymentLunarTransaction extends \Controller
         ];
 
         $this->model_extension_payment_lunar_transaction->addTransaction($dataForDB);
-        $this->model_extension_payment_lunar_transaction->updateOrder($dataForDB, $this->order['order_status_id']);
+        $this->model_extension_payment_lunar_transaction->updateOrder($dataForDB, $orderStatusId);
 
         return ['success' => sprintf($this->language->get("success_transaction_{$actionType}"), $amount) . ' ' . $currency];
     }

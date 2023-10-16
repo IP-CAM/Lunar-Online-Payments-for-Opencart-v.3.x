@@ -1,6 +1,7 @@
 <?php
 
 require_once(DIR_SYSTEM . 'library/Lunar/vendor/autoload.php');
+require_once(DIR_SYSTEM . 'library/Lunar/helper/LunarHelper.php');
 
 
 use Lunar\Lunar as ApiClient;
@@ -11,17 +12,15 @@ use Lunar\Exception\ApiException;
  */
 abstract class AbstractLunarFrontController extends \Controller
 {
-    const EXTENSION_PATH = '';
     const REMOTE_URL = 'https://pay.lunar.money/?id=';
     const TEST_REMOTE_URL = 'https://hosted-checkout-git-develop-lunar-app.vercel.app/?id=';
-    const LUNAR_DB_TABLE = DB_PREFIX . 'lunar_transaction';
 
     protected string $paymentMethodCode = '';
     protected string $paymentMethodConfigCode = '';
+    protected string $extensionPath = '';
 
     protected ApiClient $lunarApiClient;
 
-    protected $errors = [];
     protected bool $testMode = false;
     protected bool $isInstantMode = false;
     protected array $args = [];
@@ -35,8 +34,10 @@ abstract class AbstractLunarFrontController extends \Controller
     public function __construct($registry) {
 		parent::__construct($registry);
 
-        $this->load->language('extension/payment/lunar');
-        $this->load->model(static::EXTENSION_PATH);
+        $this->extensionPath = 'extension/payment/' . LunarHelper::LUNAR_METHODS[$this->paymentMethodCode];
+
+        $this->load->language(LunarHelper::LUNAR_GENERAL_PATH);
+        $this->load->model($this->extensionPath);
         $this->load->model('extension/payment/lunar_transaction');
         $this->load->model('checkout/order');
 
@@ -76,9 +77,9 @@ abstract class AbstractLunarFrontController extends \Controller
     {
         $data['button_confirm'] = $this->language->get('button_confirm');
         $data['methodCode'] = $this->paymentMethodCode;
-        $data['paymentRedirectUrl'] = $this->url->link(static::EXTENSION_PATH . '/redirect');
+        $data['paymentRedirectUrl'] = $this->url->link($this->extensionPath . '/redirect');
 
-        return $this->load->view('extension/payment/lunar', $data);
+        return $this->load->view(LunarHelper::LUNAR_GENERAL_PATH, $data);
     }
 
     /**
@@ -97,7 +98,13 @@ abstract class AbstractLunarFrontController extends \Controller
             $data['error'] = 'An error occurred creating payment intent for order. Please try again or contact system administrator.';
         }
 
-        $this->savePaymentIntentOnTransaction();
+        $data = [
+            'order_id' => $this->orderId,
+            'transaction_id' => $this->paymentIntentId,
+            'transaction_currency' => $this->order['currency_code'],
+            'order_amount' => $this->order['total'],
+        ];
+        $this->savePaymentIntentOnTransaction($data);
 
         $redirectUrl = self::REMOTE_URL . $this->paymentIntentId;
         if($this->testMode) {
@@ -115,7 +122,7 @@ abstract class AbstractLunarFrontController extends \Controller
      */
     public function callback()
     {
-        $this->load->language('extension/payment/lunar');
+        $this->load->language(LunarHelper::LUNAR_GENERAL_PATH);
 
         $this->paymentIntentId = $this->getPaymentIntentFromTransaction();
 
@@ -150,10 +157,6 @@ abstract class AbstractLunarFrontController extends \Controller
 
             $transactionType = 'authorize';
             $newOrderStatus = $this->getConfigValue('authorize_status_id');
-            $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
-                        . ' transaction ref: ' . $this->paymentIntentId 
-                        . "\r\n" . 'Authorized amount: ' . $apiResponse['amount']['decimal']
-                        . ' (' . $apiResponse['amount']['currency'] . ')';
             $successMessage = $this->language->get('success_message_authorized');
             
             if ($this->isInstantMode) {
@@ -173,10 +176,6 @@ abstract class AbstractLunarFrontController extends \Controller
 
                 $transactionType = 'capture';
                 $newOrderStatus = $this->getConfigValue('capture_status_id');
-                $comment = 'Lunar ' . ucfirst($this->paymentMethodCode) 
-                            . ' transaction ref: ' . $this->paymentIntentId 
-                            . "\r\n" . 'Captured amount: ' . $apiResponse['amount']['decimal']
-                            . ' (' . $apiResponse['amount']['currency'] . ')';
                 $successMessage = $this->language->get('success_message_captured');
             }
 
@@ -195,9 +194,12 @@ abstract class AbstractLunarFrontController extends \Controller
             'transaction_amount' => $apiResponse['amount']['decimal'],
         ];
 
-        $this->model_checkout_order->addOrderHistory($this->orderId, $newOrderStatus, $comment);
+        $comment = 'Transaction ref: ' . $this->paymentIntentId
+                    . "\r\n" . ucfirst($transactionType) . 'd amount: ' . $apiResponse['amount']['decimal']
+                    . ' (' . $apiResponse['amount']['currency'] . ')';
+        $this->model_checkout_order->addOrderHistory($this->orderId, $newOrderStatus, $comment, $notify = true);
 
-        $this->updateTransaction($transactionData);
+        $this->updateInitTransaction($transactionData);
 
         $this->session->data['success'] = $successMessage;
         $this->response->redirect($this->url->link('checkout/success'));
@@ -209,46 +211,39 @@ abstract class AbstractLunarFrontController extends \Controller
      */
     private function setArgs()
     {
-        $pluginVersion = json_decode(file_get_contents(dirname(__DIR__) . '/composer.json'))->version;
-
-        if ($this->testMode) {
-            $this->args['test'] = $this->getTestObject();
-        }
-
         $order = $this->order;
 
-        $name = $order['payment_firstname'] . ' ' . $order['payment_lastname'];
-        $address = $order['payment_address_1'] . ', ';
-        $address .= $order['payment_address_2'] != '' ? $order['payment_address_2'] . ', ' : '';
-        $address .= $order['payment_city'] . ', ' . $order['payment_zone'] . ', ';
-        $address .= $order['payment_country'] . ' - ' . $order['payment_postcode'];
-
-
-        $this->args['amount'] = [
-            'currency' => $order['currency_code'],
-            'decimal' => (string) $order['total'],
-        ];
-
-        $this->args['custom'] = [
-			'products' => $this->getFormattedProducts(),
-            'customer' => [
-                'name' => $name,
-                'email' => $order['email'],
-                'telephone' => $order['telephone'],
-                'address' => $address,
-                'ip' => $order['ip'],
+        $this->args = [
+            'integration' => [
+                'key' => $this->publicKey,
+                'name' => $this->getConfigValue('shop_title'),
+                'logo' => $this->getConfigValue('logo_url'),
             ],
-			'platform' => [
-				'name' => 'Opencart',
-				'version' => VERSION,
-			],
-			'lunarPluginVersion' => $pluginVersion,
-        ];
-
-        $this->args['integration'] = [
-            'key' => $this->publicKey,
-            'name' => $this->getConfigValue('shop_title'),
-            'logo' => $this->getConfigValue('logo_url'),
+            'amount' => [
+                'currency' => $order['currency_code'],
+                'decimal' => (string) $order['total'],
+            ],
+            'custom' => [
+                'orderId' => $order['order_id'],
+                'products' => $this->getFormattedProducts(),
+                'customer' => [
+                    'name' => $order['payment_firstname'] . ' ' . $order['payment_lastname'],
+                    'email' => $order['email'],
+                    'phoneNo' => $order['telephone'],
+                    'address' => $order['payment_address_1'] . ', '
+                                    . $order['payment_address_2'] != '' ? $order['payment_address_2'] . ', ' : ''
+                                    . $order['payment_city'] . ', ' . $order['payment_zone'] . ', '
+                                    . $order['payment_country'] . ' - ' . $order['payment_postcode'],
+                    'ip' => $order['ip'],
+                ],
+                'platform' => [
+                    'name' => 'Opencart',
+                    'version' => VERSION,
+                ],
+                'lunarPluginVersion' => LunarHelper::pluginVersion(),
+            ],
+            'preferredPaymentMethod' => $this->paymentMethodCode,
+            'redirectUrl' => $this->url->link($this->extensionPath . '/callback&order_id=' . $order['order_id']),
         ];
 
         if ($this->getConfigValue('configuration_id')) {
@@ -258,33 +253,17 @@ abstract class AbstractLunarFrontController extends \Controller
             ];
         }
 
-        $this->args['redirectUrl'] = $this->url->link(
-            static::EXTENSION_PATH . '/callback&order_id=' . $this->orderId
-        );
-
-        $this->args['preferredPaymentMethod'] = $this->paymentMethodCode;
+        if ($this->testMode) {
+            $this->args['test'] = $this->getTestObject();
+        }
     }
 
     /**
-     * @TODO maybe also use "$this->db->escape" on values to be inserted
+     * 
      */
-    private function savePaymentIntentOnTransaction()
+    private function savePaymentIntentOnTransaction($data)
     {
-        // prevent inserting init transaction multiple times
-        $this->db->query("DELETE FROM `" . self::LUNAR_DB_TABLE . "`
-                            WHERE order_id = '" . $this->orderId . "'
-                            AND transaction_type = 'INIT'");
-
-        $this->db->query("INSERT INTO `" . self::LUNAR_DB_TABLE . "`
-                            SET order_id = '" . $this->orderId . "',
-                                transaction_id = '" . $this->paymentIntentId . "',
-                                transaction_type = 'INIT',
-                                transaction_currency = '" . $this->order['currency_code'] . "',
-                                order_amount = '" . $this->order['total'] . "',
-                                transaction_amount = '0',
-                                history = '0',
-                                date_added = NOW()"
-                        );
+        $this->model_extension_payment_lunar_transaction->savePaymentIntentOnTransaction($data);
     }
 
     /**
@@ -301,22 +280,11 @@ abstract class AbstractLunarFrontController extends \Controller
     /**
      * 
      */
-    private function updateTransaction($data)
+    private function updateInitTransaction($data)
     {
-        $this->db->query("UPDATE `" . self::LUNAR_DB_TABLE . "`
-                            SET order_id = '" . $data['order_id'] . "',
-                                transaction_id = '" . $data['transaction_id'] . "',
-                                transaction_type = '" . $data['transaction_type'] . "',
-                                transaction_currency = '" . $data['transaction_currency'] . "',
-                                order_amount = '" . $data['order_amount'] . "',
-                                transaction_amount = '" . $data['transaction_amount'] . "',
-                                history = '0',
-                                date_added = NOW()
-                            WHERE order_id = '" . $data['order_id'] . "'
-                            AND transaction_type = 'INIT'"
-                        );
+        $this->model_extension_payment_lunar_transaction->updateInitTransaction($data);
     }
-    
+
     /**
      * Parses api transaction response for errors
      */
@@ -340,8 +308,7 @@ abstract class AbstractLunarFrontController extends \Controller
     {
         $matchCurrency = $this->order['currency_code'] == $apiResponse['amount']['currency'];
         $matchAmount = (string) $this->order['total'] == $apiResponse['amount']['decimal'];
-file_put_contents(DIR_SYSTEM . 'storage/logs/zzz.log', json_encode($this->order, JSON_PRETTY_PRINT) . PHP_EOL, FILE_APPEND);
-file_put_contents(DIR_SYSTEM . 'storage/logs/zzz.log', json_encode($apiResponse, JSON_PRETTY_PRINT) . PHP_EOL, FILE_APPEND);
+
         return (true == $apiResponse['authorisationCreated'] && $matchCurrency && $matchAmount);
     }
 

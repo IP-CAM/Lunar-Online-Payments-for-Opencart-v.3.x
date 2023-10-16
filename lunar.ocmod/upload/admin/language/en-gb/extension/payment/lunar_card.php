@@ -1,6 +1,6 @@
 <?php
 
-include 'lunar.php';
+include_once 'lunar.php';
 
 $_['heading_title'] = 'Lunar Card';
 

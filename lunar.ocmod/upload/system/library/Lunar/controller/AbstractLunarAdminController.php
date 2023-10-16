@@ -1,14 +1,17 @@
 <?php
 
-use Lunar\Lunar as ApiClient;
+// require_once(DIR_SYSTEM . 'library/Lunar/vendor/autoload.php');
+require_once(DIR_SYSTEM . 'library/Lunar/helper/LunarHelper.php');
+
+// use Lunar\Lunar as ApiClient;
+// use Lunar\Exception\ApiException;
 
 /**
  * 
  */
 abstract class AbstractLunarAdminController extends \Controller
 {
-    const EXTENSION_PATH = '';
-    const ADMIN_GENERAL_PATH = 'extension/payment/lunar';
+    const ADMIN_GENERAL_PATH = LunarHelper::LUNAR_GENERAL_PATH;
 
     protected $error = array();
     protected $oc_token = '';
@@ -17,20 +20,20 @@ abstract class AbstractLunarAdminController extends \Controller
     protected string $storeId = '';
     protected string $paymentMethodCode = '';
     protected string $paymentMethodConfigCode = '';
+    protected string $extensionPath = '';
     
-    protected string $pluginVersion = '';
-    protected ApiClient $lunarApiClient;
+    // protected ApiClient $lunarApiClient;
 
 
     public function index()
     {
+        $this->extensionPath = 'extension/payment/' . LunarHelper::LUNAR_METHODS[$this->paymentMethodCode];
+
         $this->oc_token = 'user_token=' . $this->session->data['user_token'];
-        $this->load->language(static::EXTENSION_PATH);
+        $this->load->language($this->extensionPath);
         $this->load->model('tool/image');
         $this->load->model(self::ADMIN_GENERAL_PATH);
         $this->load->model('setting/setting');
-
-        $this->pluginVersion = json_decode(file_get_contents(dirname(__DIR__) . '/composer.json'))->version;
 
         $this->storeId = $this->request->post['config_selected_store']
                             ?? $this->request->get['store_id'] 
@@ -44,7 +47,7 @@ abstract class AbstractLunarAdminController extends \Controller
 
         $data['stores'] = $this->getAllStoresAsArray();
 
-        $data['plugin_version'] = $this->pluginVersion;
+        $data['plugin_version'] = LunarHelper::pluginVersion();
         
         $this->setAdminTexts($data);
 
@@ -170,13 +173,98 @@ abstract class AbstractLunarAdminController extends \Controller
             }
         }
     }
+    /**
+     * Use custom function to get all opencart stores, including default.
+     *
+     * @return array
+     */
+    private function getAllStoresAsArray()
+    {
+        $storesArray   = [];
+        /** Push default store to stores array. It's not extracted with getStores(). */
+        $storesArray[] = [
+            'store_id' => 0,
+            'name'     => $this->config->get('config_name') . ' ' . $this->language->get('text_default'),
+        ];
+
+        // $storesArray[] = [
+        //     'store_id' => 1,
+        //     'name'     => 'TEST STORE',
+        // ];
+
+        $this->load->model('setting/store');
+        $opencartStores = $this->model_setting_store->getStores();
+
+        foreach ($opencartStores as $opencartStore) {
+            $storesArray[] = array(
+                'store_id' => $opencartStore['store_id'],
+                'name'     => $opencartStore['name']
+            );
+        }
+
+        return $storesArray;
+    }
+
+    /**
+     * Update the settings for specific store
+     */
+    private function maybeUpdateStoreSettings()
+    {
+        if (( $this->request->server['REQUEST_METHOD'] != 'POST' ) || !$this->validate()) {
+            return;
+        }
+
+        $this->load->model('setting/setting');
+
+        $selectedStoreId = $this->request->post['config_selected_store'];
+        unset($this->request->post['config_selected_store']);
+
+        $updatedData = [];
+        // map post keys to config keys
+        foreach ($this->request->post as $k => $val) {
+            $updatedData[$this->paymentMethodConfigCode . '_' . $k] = $val;
+        }
+
+        $this->model_setting_setting->editSetting($this->paymentMethodConfigCode, $updatedData, $selectedStoreId);
+        
+        $this->setDisabledStatusOnOtherStores();
+        
+        $this->session->data['success'] = $this->language->get('text_success');
+        
+        $redirect_url = $this->url->link($this->extensionPath, 'store_id=' . $selectedStoreId . '&' . $this->oc_token . '&type=payment', true);
+        $this->response->redirect($redirect_url);
+    }
+
+    /**
+     * Set status = disabled on stores that not have settings yet (null).
+     * @abstract If we save settings on one store, then in other store
+     *           the payment method shows up, even if it is not set up
+     * @return void
+     */
+    private function setDisabledStatusOnOtherStores()
+    {
+        $allStores = $this->getAllStoresAsArray();
+
+        $statusKey = $this->paymentMethodConfigCode . '_status';
+
+        foreach ($allStores as $store) {
+
+            /** Get all store settings by store id. */
+            $storePaymentMethodSettings = $this->model_setting_setting->getSetting($this->paymentMethodConfigCode, $store['store_id']);
+
+            /** Check if status setting is not set, then set it on 0 (= disabled). */
+            if (!isset($storePaymentMethodSettings[$statusKey])) {
+                $this->model_setting_setting->editSetting($this->paymentMethodConfigCode, [$statusKey => 0], $store['store_id']);
+            }
+        }
+    }
 
     /**
      * 
      */
     private function validate()
     {
-        if (! $this->user->hasPermission('modify', static::EXTENSION_PATH)) {
+        if (! $this->user->hasPermission('modify', $this->extensionPath)) {
             $this->error['warning'] = $this->language->get('error_permission');
         }
 
@@ -192,9 +280,6 @@ abstract class AbstractLunarAdminController extends \Controller
 
         // key validation temporary disabled
         
-        /** Include the last version API via autoloader */
-        // require_once(DIR_SYSTEM . 'library/Lunar/vendor/autoload.php');
-        
         // if ($this->request->post['payment_lunar_api_mode'] == 'live') {
         //     $error_app_key_live = $this->validateAppKeyField($this->request->post['payment_lunar_app_key_live'],'live');
         //     if($error_app_key_live){
@@ -206,16 +291,6 @@ abstract class AbstractLunarAdminController extends \Controller
         //         $this->error['error_public_key_live'] =$error_public_key_live;
         //     }
 
-        // } else {
-        //     $error_app_key_test = $this->validateAppKeyField($this->request->post['payment_lunar_app_key_test'],'test');
-        //     if($error_app_key_test){
-        //         $this->error['error_app_key_test'] = $error_app_key_test;
-        //     }
-
-        //     $error_public_key_test = $this->validatePublicKeyField($this->request->post['payment_lunar_public_key_test'],'test');
-        //     if($error_public_key_test){
-        //         $this->error['error_public_key_test'] = $error_public_key_test;
-        //     }
         // }
 
         if (! is_numeric($this->request->post['minimum_total'] ?? null)) {
@@ -289,92 +364,6 @@ abstract class AbstractLunarAdminController extends \Controller
         return $valid;
     }
 
-    /**
-     * Use custom function to get all opencart stores, including default.
-     *
-     * @return array
-     */
-    private function getAllStoresAsArray()
-    {
-        $storesArray   = [];
-        /** Push default store to stores array. It's not extracted with getStores(). */
-        $storesArray[] = [
-            'store_id' => 0,
-            'name'     => $this->config->get('config_name') . ' ' . $this->language->get('text_default'),
-        ];
-
-        // $storesArray[] = [
-        //     'store_id' => 1,
-        //     'name'     => 'TEST STORE',
-        // ];
-
-        $this->load->model('setting/store');
-        $opencartStores = $this->model_setting_store->getStores();
-
-        foreach ($opencartStores as $opencartStore) {
-            $storesArray[] = array(
-                'store_id' => $opencartStore['store_id'],
-                'name'     => $opencartStore['name']
-            );
-        }
-
-        return $storesArray;
-    }
-
-    /**
-     * Update the settings for specific store
-     */
-    private function maybeUpdateStoreSettings()
-    {
-        if (( $this->request->server['REQUEST_METHOD'] != 'POST' ) || !$this->validate()) {
-            return;
-        }
-
-        $this->load->model('setting/setting');
-
-        $selectedStoreId = $this->request->post['config_selected_store'];
-        unset($this->request->post['config_selected_store']);
-
-        $updatedData = [];
-        // map post keys to config keys
-        foreach ($this->request->post as $k => $val) {
-            $updatedData[$this->paymentMethodConfigCode . '_' . $k] = $val;
-        }
-
-        $this->model_setting_setting->editSetting($this->paymentMethodConfigCode, $updatedData, $selectedStoreId);
-        
-        $this->setDisabledStatusOnOtherStores();
-        
-        $this->session->data['success'] = $this->language->get('text_success');
-        
-        $redirect_url = $this->url->link(static::EXTENSION_PATH, 'store_id=' . $selectedStoreId . '&' . $this->oc_token . '&type=payment', true);
-        $this->response->redirect($redirect_url);
-    }
-
-    /**
-     * Set status = disabled on stores that not have settings yet (null).
-     * @abstract If we save settings on one store, then in other store
-     *           the payment method shows up, even if it is not set up
-     * @return void
-     */
-    private function setDisabledStatusOnOtherStores()
-    {
-        $allStores = $this->getAllStoresAsArray();
-
-        $statusKey = $this->paymentMethodConfigCode . '_status';
-
-        foreach ($allStores as $store) {
-
-            /** Get all store settings by store id. */
-            $storePaymentMethodSettings = $this->model_setting_setting->getSetting($this->paymentMethodConfigCode, $store['store_id']);
-
-            /** Check if status setting is not set, then set it on 0 (= disabled). */
-            if (!isset($storePaymentMethodSettings[$statusKey])) {
-                $this->model_setting_setting->editSetting($this->paymentMethodConfigCode, [$statusKey => 0], $store['store_id']);
-            }
-        }
-    }
-
     
     /**
      * Validate the App key.
@@ -393,7 +382,7 @@ abstract class AbstractLunarAdminController extends \Controller
         try {
             /** Load the identity from API**/
             $identity = $apiClient->apps()->fetch();
-        } catch ( \Paylike\Exception\ApiException $exception ) {
+        } catch ( ApiException $e ) {
             $this->log->write(sprintf($this->language->get('error_app_key_invalid'),$mode));
             return sprintf($this->language->get('error_app_key_invalid'),$mode);
         }
@@ -409,7 +398,7 @@ abstract class AbstractLunarAdminController extends \Controller
                     }
                 }
             }
-        } catch ( \Paylike\Exception\ApiException $exception ) {
+        } catch ( ApiException $e ) {
             $this->log->write(sprintf($this->language->get('error_app_key_invalid'),$mode));
         }
         /** Check if public keys array for the current mode is populated **/
@@ -464,10 +453,10 @@ abstract class AbstractLunarAdminController extends \Controller
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('heading_title'),
-            'href' => $this->url->link(static::EXTENSION_PATH, $this->oc_token, true)
+            'href' => $this->url->link($this->extensionPath, $this->oc_token, true)
         );
 
-        $data['action'] = $this->url->link(static::EXTENSION_PATH, $this->oc_token, true);
+        $data['action'] = $this->url->link($this->extensionPath, $this->oc_token, true);
         $data['cancel'] = $this->url->link('marketplace/extension', $this->oc_token . '&type=payment', true);
 
         $this->load->model('localisation/order_status');
