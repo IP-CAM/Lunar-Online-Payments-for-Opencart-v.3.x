@@ -8,6 +8,8 @@ You can also find information about the plugin here: https://lunar.app
 
 ## Installation
 
+*NOTE: It requires PHP version >=7.4
+
 Once you have installed OpenCart, follow these simple steps:
 1. Signup at [lunar.app](https://lunar.app) (it’s free)
 1. Create an account
